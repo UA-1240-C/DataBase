@@ -5,7 +5,7 @@ void connect()
 {
     try {
         // Connect to the database
-        pqxx::connection conn("dbname=mydb user=myuser password=password hostaddr=127.0.0.1 port=5432");
+        pqxx::connection conn("dbname=mydb user=postgres password=password hostaddr=127.0.0.1 port=5432");
         if (conn.is_open()) {
             std::cout << "Connected to " << conn.dbname() << std::endl;
         } else {
