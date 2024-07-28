@@ -1,6 +1,6 @@
 #include "PgMailDB.h"
 
-namespace ISXMAILDB
+namespace ISXMailDB
 {
 
 }

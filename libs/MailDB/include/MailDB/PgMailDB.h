@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IMailDB.h"
-namespace ISXMAILDB
+namespace ISXMailDB
 {
 
 class PgMailDB : public IMailDB
