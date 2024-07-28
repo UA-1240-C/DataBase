@@ -18,7 +18,7 @@ set(MAILDATABASE_LIBRARIES
 
 include(FetchContent)
 
-# project(${MAILDATABASE_PROJECT_NAME})
+project(${MAILDATABASE_PROJECT_NAME})
 
 # FetchContent_Declare(
 #   libpqxx

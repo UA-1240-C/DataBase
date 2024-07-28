@@ -2,7 +2,7 @@
 
 #include "IMailDB.h"
 
-class PostgreMailDB : public IMailDB
+class PgMailDB : public IMailDB
 {
 
 };
