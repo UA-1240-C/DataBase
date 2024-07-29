@@ -1,11 +1,18 @@
 #include <iostream>
-#include "MailDB/MailDB.h"
+#include "MailDB/PgMailDB.h"
+#include "MailDB/DBCredentials.h"
 #include <pqxx/pqxx>
 
 using namespace std;
 
 int main() 
 {
-    connect();
+    
+    ISXMailDB::PgMailDB mail("host");
+
+    ISXMailDB::Credentials credentials("", "");
+
+    mail.Connect(credentials);
+
     return 0;
 }
