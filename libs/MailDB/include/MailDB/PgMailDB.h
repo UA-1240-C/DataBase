@@ -24,7 +24,10 @@ namespace ISXMailDB
             virtual bool SignUp(const std::string_view user_name, const std::string_view hash_password) override {return false;}
             virtual bool Login(const std::string_view user_name, const std::string_view hash_password) override { return false; }
 
+            virtual std::vector<std::vector<std::string>> RetrieveUserInfo(const std::string_view user_name) override;
 
+            virtual bool InsertEmailContent(const std::string_view content) override;
+            virtual std::vector<std::vector<std::string>> RetrieveEmailContentInfo(const std::string_view content = "") override;
             // TODO: Viacheslav
             virtual bool InsertEmail(const std::string_view sender, const std::string_view receiver, 
                                      const std::string_view subject, const std::string_view body) override;
@@ -44,5 +47,8 @@ namespace ISXMailDB
             // ??
             virtual std::vector<std::vector<std::string_view>> RetrieveEmails(const std::string_view& criteria) override { return {}; }
 
+            virtual void StartTransaction() override;
+            virtual void CommitTransaction() override;
+            virtual void WriteQueryResultToStorage(const pqxx::result& query_result, std::vector<std::vector<std::string>>& storage) override;
     };
 }
