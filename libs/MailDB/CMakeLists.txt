@@ -13,14 +13,14 @@ set(LIBRARY_HEADERS
     ${LIBRARY_HEADERS_DIR}/IMailDB.h
     ${LIBRARY_HEADERS_DIR}/PgMailDB.h
     ${LIBRARY_HEADERS_DIR}/MailException.h
-
-
 )
+
+
 set(LIBRARY_SOURCE_DIR
     src
 )
 set(LIBRARY_SOURCE
-    ${LIBRARY_SOURCE_DIR}/PGMailDB.cpp
+    ${LIBRARY_SOURCE_DIR}/PgMailDB.cpp
 )
 
 project(${PROJECT_NAME})
