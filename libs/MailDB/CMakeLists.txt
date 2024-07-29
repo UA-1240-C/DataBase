@@ -23,8 +23,6 @@ set(LIBRARY_SOURCE_DIR
 set(LIBRARY_SOURCE
     ${LIBRARY_SOURCE_DIR}/MailDB.cpp
     ${LIBRARY_SOURCE_DIR}/PGMailDB.cpp
-
-
 )
 
 project(${PROJECT_NAME})

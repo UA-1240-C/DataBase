@@ -6,7 +6,7 @@ CREATE TABLE hosts (
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
 	host_id INTEGER REFERENCES hosts(host_id),
-    user_name VARCHAR(100) UNIQUE NOT NULL,
+    user_name VARCHAR(100) NOT NULL,
     password_hash TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
