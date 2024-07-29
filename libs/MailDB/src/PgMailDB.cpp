@@ -82,9 +82,9 @@ bool PgMailDB::SignUp(const std::string_view user_name, const std::string_view h
 
 bool PgMailDB::Login(const std::string_view user_name, const std::string_view hash_password)
 {
-    pqxx::work tx(*m_conn);
+    pqxx::nontransaction ntx(*m_conn);
 
-    pqxx::result find_user = tx.exec_params(
+    pqxx::result find_user = ntx.exec_params(
         "SELECT 1 FROM users "
         "WHERE host_id = $1 AND user_name = $2 AND password_hash = $3"
         , m_host_id, user_name, hash_password);
@@ -102,14 +102,50 @@ bool PgMailDB::InsertEmail(const std::string_view sender, const std::string_view
 {
     return false;
 }
-bool PgMailDB::RetrieveEmails(const std::string_view user_name)
+std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, bool should_retrieve_all)
 {
-    return false;
+    pqxx::work tx(*m_conn);
+
+    std::string additional_condition = "";
+    if (!should_retrieve_all)
+    {
+        additional_condition = " AND e.is_received = FALSE";
+    }
+
+    std::string query = 
+    "WITH filtered_emails AS ( "
+        "    SELECT e.sender_id, e.subject, e.mail_body_id "
+        "    FROM emailMessages AS e "
+        "    JOIN users AS u ON u.user_id = e.recipient_id "
+        "    WHERE u.user_name = " + tx.quote(user_name) + additional_condition +
+        ")"
+        "SELECT u2.user_name AS sender_name, f.subject, m.body_content "
+        "FROM filtered_emails AS f "
+        "LEFT JOIN users AS u2 ON u2.user_id = f.sender_id "
+        "LEFT JOIN mailBodies AS m ON m.mail_body_id = f.mail_body_id; ";
+
+    std::vector<Mail> resutl_mails;
+
+    for (auto [sender, subject, body]
+        : tx.query<std::string, std::string, std::string>(query)
+        )
+    {
+        resutl_mails.emplace_back(sender, subject, body);
+    }
+
+    tx.exec_params(
+        "UPDATE emailMessages "
+        "SET is_received = TRUE "
+        "FROM users "
+        "WHERE emailMessages.recipient_id = users.user_id "
+        "AND users.user_name = $1; "
+        , user_name);   
+
+    tx.commit(); 
+
+    return resutl_mails;
 }
-bool PgMailDB::RetrieveAllEmails(const std::string_view user_name)
-{
-    return false;
-}
+
 bool PgMailDB::DeleteEmail(const std::string_view user_name)
 {
     return false;
@@ -119,10 +155,6 @@ bool PgMailDB::DeleteUser(const std::string_view user_name, const std::string_vi
     return false;
 }
 std::vector<std::vector<std::string_view>> PgMailDB::ExecuteQuery(const std::string_view &query)
-{
-    return std::vector<std::vector<std::string_view>>();
-}
-std::vector<std::vector<std::string_view>> PgMailDB::RetrieveEmails(const std::string_view &criteria)
 {
     return std::vector<std::vector<std::string_view>>();
 }

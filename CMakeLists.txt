@@ -40,7 +40,7 @@ target_link_libraries(${MAILDATABASE_PROJECT_NAME} ${MAILDATABASE_LIBRARIES})
 
 FetchContent_Declare(googletest
 	GIT_REPOSITORY https://github.com/google/googletest
-	GIT_TAG release-1.11.0)
+	GIT_TAG v1.15.0)
 FetchContent_GetProperties(googletest)
 
 if(NOT googletest_POPULATED)

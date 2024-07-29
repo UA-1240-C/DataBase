@@ -15,21 +15,17 @@ int main()
     ofstream output("errors.txt");
     try
     {
-        pg.SignUp("den", "123");
+        //pg.SignUp("den", "123");
+        //pg.Login("den", "123");
+        for (auto& mail : pg.RetrieveEmails("den", true))
+        {
+            cout << mail.subject << " " << mail.sender << " " << mail.body << endl;
+        }
     }
     catch (const exception& e)
     {
-        try 
-        {
-            cout << "exception: " << e.what() << endl;
-            output << "exception: " << e.what() << endl;
-            pg.Login("den", "1234");
-        }
-        catch(const exception& e)
-        {
-            cout << "exception: " << e.what() << endl;
-        }
-
+        cout << "exception: " << e.what() << endl;
+        output << "exception: " << e.what() << endl;
     }
     return 0;
 }

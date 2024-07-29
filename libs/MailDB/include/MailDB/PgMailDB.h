@@ -25,8 +25,7 @@ public:
                              const std::string_view subject, const std::string_view body) override;
 
     // TODO: Denys
-    virtual bool RetrieveEmails(const std::string_view user_name) override;
-    virtual bool RetrieveAllEmails(const std::string_view user_name) override;
+    virtual std::vector<Mail> RetrieveEmails(const std::string_view user_name, bool should_retrieve_all = false) override;
 
     // TODO: Viacheslav
     virtual bool DeleteEmail(const std::string_view user_name) override;
@@ -36,8 +35,6 @@ protected:
     // TODO
     virtual std::vector<std::vector<std::string_view>> ExecuteQuery(const std::string_view& query) override;
 
-    // // ??
-    virtual std::vector<std::vector<std::string_view>> RetrieveEmails(const std::string_view& criteria) override;
 
     std::unique_ptr<pqxx::connection> m_conn;
 };

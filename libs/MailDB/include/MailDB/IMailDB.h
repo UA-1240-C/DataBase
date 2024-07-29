@@ -8,6 +8,17 @@
 namespace ISXMailDB
 {
 
+struct Mail
+{
+    std::string sender;
+    std::string subject;
+    std::string body;
+
+    Mail(std::string sender, std::string subject, std::string body)
+    : sender(sender), subject(subject), body(body)
+    {}
+};
+
 class IMailDB
 {
 public:
@@ -36,8 +47,7 @@ public:
                              const std::string_view subject, const std::string_view body) = 0;
 
     // TODO: Denys
-    virtual bool RetrieveEmails(const std::string_view user_name) = 0;
-    virtual bool RetrieveAllEmails(const std::string_view user_name) = 0;
+    virtual std::vector<Mail> RetrieveEmails(const std::string_view user_name, bool should_retrieve_all = false) = 0;
 
     // TODO: Viacheslav
     virtual bool DeleteEmail(const std::string_view user_name) = 0;
@@ -46,9 +56,6 @@ public:
 protected:
     // TODO
     virtual std::vector<std::vector<std::string_view>> ExecuteQuery(const std::string_view& query) = 0;
-
-    // // ??
-    virtual std::vector<std::vector<std::string_view>> RetrieveEmails(const std::string_view& criteria) = 0;
 
     std::string m_host_name;
     uint32_t m_host_id;
