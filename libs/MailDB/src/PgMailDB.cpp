@@ -60,18 +60,11 @@ namespace ISXMailDB
 
     bool PgMailDB::IsConnected() const
     {
-        try
+        if (m_conn) 
         {
-            if (m_conn) 
-            {
-                return m_conn->is_open();
-            }
-            else
-            {
-                throw pqxx::broken_connection();
-            }
+            return m_conn->is_open();
         }
-        catch (...)
+        else
         {
             throw pqxx::broken_connection();
         }
