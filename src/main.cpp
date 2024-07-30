@@ -27,9 +27,25 @@ int main()
     //     cout << "exception: " << e.what() << endl;
     //     output << "exception: " << e.what() << endl;
     // }
-    // ISXMailDB::PgMailDB mail("host4");
+    
 
-    // mail.Connect("postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require");
+    /*ISXMailDB::PgMailDB mail("host5");
+    
+    mail.Connect("postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres");
+
+    auto users = mail.RetrieveUserInfo("user3");
+
+    for(auto&& user : users)
+    {
+        std::cout << user.user_name << " " << user.user_password << " " << user.host_name << '\n';
+    }
+    
+    auto contents = mail.RetrieveEmailContentInfo("This is the body of the second email.");
+
+    for(auto&& content : contents)
+    {
+        std::cout << content << '\n';
+    }*/
 
     return 0;
 }

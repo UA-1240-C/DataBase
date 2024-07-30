@@ -9,6 +9,18 @@
 namespace ISXMailDB
 {
 
+struct User
+{
+    User(const std::string& user_name, const std::string& user_password, const std::string& host_name)
+        : user_name{user_name}, user_password{user_password}, host_name{host_name}
+    {
+    }
+
+    std::string user_name;
+    std::string user_password;
+    std::string host_name;
+};
+
 struct Mail
 {
     std::string sender;
@@ -44,9 +56,9 @@ public:
     virtual bool Login(const std::string_view user_name, const std::string_view hash_password) = 0;
 
     // TODO: Viacheslav
-    virtual std::vector<std::vector<std::string>> RetrieveUserInfo(const std::string_view user_name = "") = 0;
+    virtual std::vector<User> RetrieveUserInfo(const std::string_view user_name = "") = 0;
     virtual bool InsertEmailContent(const std::string_view content) = 0;
-    virtual std::vector<std::vector<std::string>> RetrieveEmailContentInfo(const std::string_view content = "") = 0;
+    virtual std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content = "") = 0;
     virtual bool InsertEmail(const std::string_view sender, const std::string_view receiver,
                                 const std::string_view subject, const std::string_view body) = 0;
 
@@ -59,7 +71,6 @@ public:
 
 protected:
     virtual void InsertHost(const std::string_view host_name) = 0;
-    virtual void WriteQueryResultToStorage(const pqxx::result& query_result, std::vector<std::vector<std::string>>& storage) = 0;
 
     std::string m_host_name;
     uint32_t m_host_id;

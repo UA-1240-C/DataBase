@@ -24,9 +24,9 @@ public:
     virtual bool Login(const std::string_view user_name, const std::string_view hash_password) override;
 
     // TODO: Viacheslav
-    virtual std::vector<std::vector<std::string>> RetrieveUserInfo(const std::string_view user_name) override;
+    virtual std::vector<User> RetrieveUserInfo(const std::string_view user_name = "") override;
     virtual bool InsertEmailContent(const std::string_view content) override;
-    virtual std::vector<std::vector<std::string>> RetrieveEmailContentInfo(const std::string_view content = "") override;
+    virtual std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content = "") override;
     virtual bool InsertEmail(const std::string_view sender, const std::string_view receiver,
                                 const std::string_view subject, const std::string_view body) override;
 
@@ -39,7 +39,6 @@ public:
 
 protected:
     virtual void InsertHost(const std::string_view host_name) override;
-    virtual void WriteQueryResultToStorage(const pqxx::result& query_result, std::vector<std::vector<std::string>>& storage) override;
 
     uint32_t RetriveUserId(const std::string_view user_name, pqxx::transaction_base &ntx) const;
 

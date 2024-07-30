@@ -1,12 +1,7 @@
 #include <iostream>
 #include <memory>
 
-#include <pqxx/except>
-
 #include "PgMailDB.h"
-
-#include <iostream>
-#include "MailException.h"
 
 namespace ISXMailDB
 {
@@ -57,10 +52,8 @@ bool PgMailDB::IsConnected() const
     {
         return m_conn->is_open();
     }
-    else
-    {
-        throw pqxx::broken_connection();
-    }
+
+    return false;
 }
 
 bool PgMailDB::SignUp(const std::string_view user_name, const std::string_view hash_password)
@@ -122,7 +115,7 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
     return true;
 }
 
- std::vector<std::vector<std::string>> PgMailDB::RetrieveUserInfo(const std::string_view user_name)
+ std::vector<User> PgMailDB::RetrieveUserInfo(const std::string_view user_name)
     {
         try 
         {
@@ -134,7 +127,7 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
         catch (const std::exception& e)
         {
             std::cerr << e.what() << std::endl;
-            return {};
+            return std::vector<User>();
         }
 
 
@@ -143,26 +136,34 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
         if (user_name.empty())
         {
             user_query_result = nontransaction.exec_params(
-                "SELECT * FROM public.\"users\""
+                "SELECT u.user_name, u.password_hash, h.host_name FROM public.\"users\" u "
+                "LEFT JOIN public.\"hosts\" h ON u.host_id = h.host_id"
             );
         }
         else
         {
             user_query_result = nontransaction.exec_params(
-                "SELECT * FROM public.\"users\" "
-                "WHERE user_name = $1"
-                , nontransaction.quote(user_name)
+                "SELECT u.user_name, u.password_hash, h.host_name FROM public.\"users\" u "
+                "LEFT JOIN public.\"hosts\" h ON u.host_id = h.host_id "
+                "WHERE u.user_name = $1"
+                , nontransaction.esc(user_name)
             );
         }
 
-        std::vector<std::vector<std::string>> info;
+        std::vector<User> info;
         if (!user_query_result.empty())
         {
-            WriteQueryResultToStorage(user_query_result, info);
+            for (auto&& row : user_query_result)
+            {
+                info.push_back(User(row.at("user_name").as<std::string>()
+                                  , row.at("password_hash").as<std::string>()
+                                  , row.at("host_name").as<std::string>()));
+            }
+
             return info;
         }
 
-        return std::vector<std::vector<std::string>>();
+        return std::vector<User>();
     }
 
 bool PgMailDB::InsertEmailContent(const std::string_view content)
@@ -206,7 +207,7 @@ bool PgMailDB::InsertEmailContent(const std::string_view content)
     return true;
 }
 
-std::vector<std::vector<std::string>> PgMailDB::RetrieveEmailContentInfo(const std::string_view content)
+std::vector<std::string> PgMailDB::RetrieveEmailContentInfo(const std::string_view content)
 {
     try
     {
@@ -217,7 +218,7 @@ std::vector<std::vector<std::string>> PgMailDB::RetrieveEmailContentInfo(const s
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
-        return std::vector<std::vector<std::string>>();
+        return std::vector<std::string>();
     }
 
     pqxx::nontransaction nontransaction(*m_conn);
@@ -225,26 +226,30 @@ std::vector<std::vector<std::string>> PgMailDB::RetrieveEmailContentInfo(const s
     if (content.empty())
     {
         content_query_result = nontransaction.exec_params(
-            "SELECT * FROM public.\"mailBodies\""
+            "SELECT body_content FROM public.\"mailBodies\""
         );
     }
     else
     {
         content_query_result = nontransaction.exec_params(
-            "SELECT * FROM public.\"mailBodies\" "
+            "SELECT body_content FROM public.\"mailBodies\" "
             "WHERE body_content = $1"
-            , nontransaction.quote(content)
+            , nontransaction.esc(content)
         );
     }
 
-    std::vector<std::vector<std::string>> info{};
+    std::vector<std::string> info{};
     if (!content_query_result.empty())
     {
-        WriteQueryResultToStorage(content_query_result, info);
+        for (auto&& row : content_query_result)
+        {
+            info.push_back(row.at("body_content").as<std::string>());
+        }
+
         return info;
     }
 
-    return std::vector<std::vector<std::string>>();
+    return std::vector<std::string>();
 }
 
 bool PgMailDB::InsertEmail(const std::string_view sender, const std::string_view receiver,
@@ -445,17 +450,4 @@ uint32_t PgMailDB::RetriveUserId(const std::string_view user_name, pqxx::transac
         throw std::logic_error("user doesn't exist");
     };
 }  
-
-void PgMailDB::WriteQueryResultToStorage(const pqxx::result& query_result, std::vector<std::vector<std::string>>& info)
-{
-    for (auto&& row : query_result)
-    {
-        info.push_back(std::vector<std::string>());
-        for (auto&& column : row)
-        {
-            info.back().push_back(column.as<std::string>());
-        }
-    }
-}
-
 }
