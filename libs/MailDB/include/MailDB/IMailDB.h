@@ -2,61 +2,67 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 #include <pqxx/pqxx>
 
 namespace ISXMailDB
 {
 
-    struct Mail
+struct Mail
+{
+    std::string sender;
+    std::string subject;
+    std::string body;
+
+    Mail(std::string sender, std::string subject, std::string body)
+        : sender(sender), subject(subject), body(body)
     {
-        std::string sender;
-        std::string subject;
-        std::string body;
+    }
+};
 
-        Mail(std::string sender, std::string subject, std::string body)
-            : sender(sender), subject(subject), body(body)
-        {
-        }
-    };
-
-    class IMailDB
+class IMailDB
+{
+public:
+    IMailDB(const std::string_view host_name)
     {
-    public:
-        IMailDB(const std::string_view host_name)
+        if (host_name.empty())
         {
-            if (host_name.empty())
-            {
-                throw 1; // change
-            }
-            m_host_name = host_name;
+            throw 1; // change
         }
-        virtual ~IMailDB() = default;
+        m_host_name = host_name;
+    }
+    virtual ~IMailDB() = default;
 
-        // TODO: Viacheslav
-        virtual bool Connect(const std::string &connection_string) = 0;
-        virtual void Disconnect() = 0;
-        virtual bool IsConnected() const = 0;
+    // TODO: Viacheslav
+    virtual bool Connect(const std::string &connection_string) = 0;
+    virtual void Disconnect() = 0;
+    virtual bool IsConnected() const = 0;
 
-        // TODO: Denys
-        virtual bool SignUp(const std::string_view user_name, const std::string_view hash_password) = 0;
-        virtual bool Login(const std::string_view user_name, const std::string_view hash_password) = 0;
+    // TODO: Denys
+    virtual bool SignUp(const std::string_view user_name, const std::string_view hash_password) = 0;
+    virtual bool Login(const std::string_view user_name, const std::string_view hash_password) = 0;
 
-        // TODO: Viacheslav
-        virtual bool InsertEmail(const std::string_view sender, const std::string_view receiver,
-                                 const std::string_view subject, const std::string_view body) = 0;
+    // TODO: Viacheslav
+    virtual std::vector<std::vector<std::string>> RetrieveUserInfo(const std::string_view user_name = "") = 0;
+    virtual bool InsertEmailContent(const std::string_view content) = 0;
+    virtual std::vector<std::vector<std::string>> RetrieveEmailContentInfo(const std::string_view content = "") = 0;
+    virtual bool InsertEmail(const std::string_view sender, const std::string_view receiver,
+                                const std::string_view subject, const std::string_view body) = 0;
 
-        // TODO: Denys
-        virtual std::vector<Mail> RetrieveEmails(const std::string_view user_name, bool should_retrieve_all = false) const = 0;
+    // TODO: Denys
+    virtual std::vector<Mail> RetrieveEmails(const std::string_view user_name, bool should_retrieve_all = false) const = 0;
 
-        // TODO: Viacheslav
-        virtual bool DeleteEmail(const std::string_view user_name) = 0;
-        virtual bool DeleteUser(const std::string_view user_name, const std::string_view hash_password) = 0;
+    // TODO: Viacheslav
+    virtual bool DeleteEmail(const std::string_view user_name) = 0;
+    virtual bool DeleteUser(const std::string_view user_name, const std::string_view hash_password) = 0;
 
-    protected:
-        std::string m_host_name;
+protected:
+    virtual void InsertHost(const std::string_view host_name) = 0;
+    virtual void WriteQueryResultToStorage(const pqxx::result& query_result, std::vector<std::vector<std::string>>& storage) = 0;
 
-        virtual void InsertHost(const std::string_view host_name) = 0;
-    };
+    std::string m_host_name;
+    uint32_t m_host_id;
+};
 
 }

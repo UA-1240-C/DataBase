@@ -4,10 +4,9 @@
 
 namespace ISXMailDB
 {
-
-class MailException : public std::exception
-{
-
-};
-
+	class MailException : public std::exception
+	{
+	public:
+		//virtual const char* what() const = 0;
+	};
 };
