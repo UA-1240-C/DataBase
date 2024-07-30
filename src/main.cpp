@@ -10,14 +10,15 @@ using namespace ISXMailDB;
 int main() 
 {
     PgMailDB pg("myhost");
-    pg.Connect("dbname=mydb user=postgres password=password hostaddr=127.0.0.1 port=5432");
+    pg.Connect("postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require");
+
 
     ofstream output("errors.txt");
     try
     {
         //pg.SignUp("den", "123");
-        //pg.Login("den", "123");
-        for (auto& mail : pg.RetrieveEmails("den", true))
+        pg.Login("den", "123");
+        for (auto& mail : pg.RetrieveEmails("user1", true))
         {
             cout << mail.subject << " " << mail.sender << " " << mail.body << endl;
         }

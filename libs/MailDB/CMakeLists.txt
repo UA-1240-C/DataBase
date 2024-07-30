@@ -15,7 +15,6 @@ set(LIBRARY_HEADERS
     ${LIBRARY_HEADERS_DIR}/MailException.h
 )
 
-
 set(LIBRARY_SOURCE_DIR
     src
 )

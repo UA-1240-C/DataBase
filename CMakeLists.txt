@@ -20,13 +20,6 @@ include(FetchContent)
 
 project(${MAILDATABASE_PROJECT_NAME})
 
-# FetchContent_Declare(
-#   libpqxx
-#   GIT_REPOSITORY https://github.com/jtv/libpqxx.git
-#   GIT_TAG 7.7.4 
-# )
-# FetchContent_MakeAvailable(libpqxx)
-
 add_executable(${MAILDATABASE_PROJECT_NAME} ${MAILDATABASE_SOURCE})
 set_property(TARGET ${MAILDATABASE_PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
