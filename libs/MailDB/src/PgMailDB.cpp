@@ -4,7 +4,6 @@
 #include <pqxx/except>
 
 #include "PgMailDB.h"
-#include "DBCredentials.h"
 
 namespace ISXMailDB
 {
@@ -18,21 +17,11 @@ namespace ISXMailDB
         Disconnect();
     }
 
-    bool PgMailDB::Connect(const Credentials& credentials)
+    bool PgMailDB::Connect(const std::string& connection_string)
     {
         try {
-            std::string connect_string = "dbname=" + credentials.m_db_name + 
-                                         " user=postgres password=" + credentials.m_db_password +
-                                         " hostaddr=127.0.0.1 port=5432";
-            m_conn = std::make_unique<pqxx::connection>(connect_string);
-
-            pqxx::work transaction(*m_conn);
-            transaction.exec_params(
-                "INSERT INTO public.\"hosts\" (host_name)VALUES($1) "
-                "ON CONFLICT(host_name) DO NOTHING "
-                , m_host_name
-            );
-            transaction.commit();
+            m_conn = std::make_unique<pqxx::connection>(connection_string);
+            InsertHost(m_host_name);
         }
         catch (const std::exception &e) {
             std::cerr << e.what() << std::endl;
@@ -68,6 +57,26 @@ namespace ISXMailDB
         {
             throw pqxx::broken_connection();
         }
+    }
+
+    bool PgMailDB::InsertHost(const std::string& host_name)
+    {
+        pqxx::work transaction(*m_conn);
+        try
+        {
+            m_host_id = transaction.query_value<uint32_t>("SELECT host_id FROM hosts WHERE host_name = " + transaction.quote(host_name));
+        }
+        catch (std::exception& e)
+        {
+            pqxx::result host_id_result = transaction.exec_params(
+                "INSERT INTO hosts (host_name) VALUES ( $1 ) RETURNING host_id"
+                , host_name);
+
+            m_host_id = host_id_result[0][0].as<uint32_t>();
+        }
+        transaction.commit();
+
+        return true;
     }
 
     std::vector<std::vector<std::string>> PgMailDB::RetrieveUserInfo(const std::string_view user_name)
@@ -129,12 +138,22 @@ namespace ISXMailDB
 
         try {
             pqxx::work transaction(*m_conn);
-            transaction.exec_params(
-                "INSERT INTO public.\"mailBodies\" (body_content)VALUES($1) "
-                "ON CONFLICT(body_content) DO NOTHING "
-                , content
-            );
+            try 
+            {
+                uint32_t content_id = transaction.query_value<uint32_t>(
+                    "SELECT mail_body_id FROM public.\"mailBodies\" WHERE body_content = " + transaction.quote(content)
+                );
+            }
+            catch (const std::exception& e) 
+            {
+                transaction.exec_params(
+                    "INSERT INTO public.\"mailBodies\" (body_content)VALUES($1) "
+                    "ON CONFLICT(body_content) DO NOTHING "
+                    , content
+                );
+            }
             transaction.commit();
+
         }
         catch (const std::exception& e) {
             std::cerr << "Transaction failed: " << e.what() << std::endl;

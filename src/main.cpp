@@ -1,21 +1,14 @@
 #include <iostream>
-#include "MailDB/PgMailDB.h"
-#include "MailDB/DBCredentials.h"
 #include <pqxx/pqxx>
 
-using namespace std;
+#include "MailDB/PgMailDB.h"
+
 
 int main() 
 {
-     ISXMailDB::PgMailDB mail("host");
+    ISXMailDB::PgMailDB mail("host4");
 
+    mail.Connect("postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require");
 
-    ISXMailDB::Credentials credentials("", "");
-
-    mail.Connect(credentials);
-
-    mail.InsertEmail("m3@host.com", "m2@host.com", "mail subject hear", "mail content hereeeeee");
-
-    mail.DeleteUser("m2@host.com", "pass");
     return 0;
 }

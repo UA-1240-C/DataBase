@@ -16,9 +16,10 @@ namespace ISXMailDB
             virtual ~PgMailDB();
 
             // TODO: Viacheslav
-            virtual bool Connect(const Credentials& credentials) override;
+            virtual bool Connect(const std::string& connection_string) override;
             virtual void Disconnect() override;
             virtual bool IsConnected() const override;
+            virtual bool InsertHost(const std::string& host_name) override;
 
             // TODO: Denys
             virtual bool SignUp(const std::string_view user_name, const std::string_view hash_password) override {return false;}
