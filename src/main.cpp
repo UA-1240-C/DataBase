@@ -7,8 +7,8 @@ using namespace std;
 
 int main() 
 {
-    
      ISXMailDB::PgMailDB mail("host");
+
 
     ISXMailDB::Credentials credentials("", "");
 
