@@ -47,8 +47,6 @@ namespace ISXMailDB
             // ??
             virtual std::vector<std::vector<std::string_view>> RetrieveEmails(const std::string_view& criteria) override { return {}; }
 
-            virtual void StartTransaction() override;
-            virtual void CommitTransaction() override;
             virtual void WriteQueryResultToStorage(const pqxx::result& query_result, std::vector<std::vector<std::string>>& storage) override;
     };
 }

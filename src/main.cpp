@@ -14,8 +14,8 @@ int main()
 
     mail.Connect(credentials);
 
-    //mail.InsertEmail("man@host.com", "post@host.com", "subject", "text body");
+    mail.InsertEmail("m3@host.com", "m2@host.com", "mail subject hear", "mail content hereeeeee");
 
-    mail.DeleteUser("post@host.com", "pass");
+    mail.DeleteUser("m2@host.com", "pass");
     return 0;
 }

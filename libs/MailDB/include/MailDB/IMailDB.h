@@ -59,13 +59,10 @@ protected:
     // ??
     virtual std::vector<std::vector<std::string_view>> RetrieveEmails(const std::string_view& criteria) = 0;
 
-    virtual void StartTransaction() = 0;
-    virtual void CommitTransaction() = 0;
     virtual void WriteQueryResultToStorage(const pqxx::result& query_result, std::vector<std::vector<std::string>>& storage) = 0;
 
     std::string m_host_name;
     std::unique_ptr<pqxx::connection> m_conn;
-    std::unique_ptr<pqxx::work> m_transaction;
 };
 
 }
