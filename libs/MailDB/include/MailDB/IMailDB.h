@@ -35,7 +35,11 @@ public:
     virtual bool SignUp(const std::string_view user_name, const std::string_view hash_password) = 0;
     virtual bool Login(const std::string_view user_name, const std::string_view hash_password) = 0;
 
-   
+    virtual std::vector<std::vector<std::string>> RetrieveUserInfo(const std::string_view user_name = "") = 0;
+
+    virtual bool InsertEmailContent(const std::string_view content) = 0;
+    virtual std::vector<std::vector<std::string>> RetrieveEmailContentInfo(const std::string_view content = "") = 0;
+
     // TODO: Viacheslav
     virtual bool InsertEmail(const std::string_view sender, const std::string_view receiver, 
                              const std::string_view subject, const std::string_view body) = 0;
@@ -55,8 +59,13 @@ protected:
     // ??
     virtual std::vector<std::vector<std::string_view>> RetrieveEmails(const std::string_view& criteria) = 0;
 
+    virtual void StartTransaction() = 0;
+    virtual void CommitTransaction() = 0;
+    virtual void WriteQueryResultToStorage(const pqxx::result& query_result, std::vector<std::vector<std::string>>& storage) = 0;
+
     std::string m_host_name;
     std::unique_ptr<pqxx::connection> m_conn;
+    std::unique_ptr<pqxx::work> m_transaction;
 };
 
 }
