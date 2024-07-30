@@ -1,11 +1,14 @@
 #include <iostream>
-#include "MailDB/MailDB.h"
 #include <pqxx/pqxx>
 
-using namespace std;
+#include "MailDB/PgMailDB.h"
+
 
 int main() 
 {
-    connect();
+    ISXMailDB::PgMailDB mail("host4");
+
+    mail.Connect("postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require");
+
     return 0;
 }
