@@ -17,6 +17,8 @@ int main()
     // try
     // {
     //     pg.Login("den", "123");
+    //     int i =0;
+    //     cin >> i;
     //     for (auto &mail : pg.RetrieveEmails("user1", true))
     //     {
     //         cout << mail.subject << " " << mail.sender << " " << mail.body << endl;
