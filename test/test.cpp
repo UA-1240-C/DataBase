@@ -68,7 +68,7 @@ protected:
   {
     pqxx::work tx(s_connection);
 
-    tx.exec("DROP TABLE hosts, users, emailMessages, mailBodies");
+    tx.exec("DROP TABLE hosts, users, \"emailMessages\", \"mailBodies\"");
     tx.commit();
 
     s_connection.close();
@@ -93,8 +93,8 @@ protected:
   {
     pqxx::work tx(s_connection);
 
-    tx.exec("TRUNCATE TABLE emailMessages RESTART IDENTITY CASCADE;");
-    tx.exec("TRUNCATE TABLE mailBodies RESTART IDENTITY CASCADE;");
+    tx.exec("TRUNCATE TABLE \"emailMessages\" RESTART IDENTITY CASCADE;");
+    tx.exec("TRUNCATE TABLE \"mailBodies\" RESTART IDENTITY CASCADE;");
     tx.exec("TRUNCATE TABLE users RESTART IDENTITY CASCADE;");
     tx.exec("TRUNCATE TABLE hosts RESTART IDENTITY CASCADE;");
 

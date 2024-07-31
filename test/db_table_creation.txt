@@ -11,17 +11,17 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE 'mailBodies' (
+CREATE TABLE "mailBodies" (
     mail_body_id SERIAL PRIMARY KEY,
     body_content TEXT NOT NULL
 );
 
-CREATE TABLE 'emailMessages' (
+CREATE TABLE "emailMessages" (
     email_message_id SERIAL PRIMARY KEY,
     sender_id INTEGER REFERENCES users(user_id),
     recipient_id INTEGER REFERENCES users(user_id),
     subject VARCHAR(255),
-	mail_body_id INTEGER REFERENCES mailBodies(mail_body_id),
+	mail_body_id INTEGER REFERENCES "mailBodies"(mail_body_id),
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_received BOOLEAN DEFAULT FALSE
 );
