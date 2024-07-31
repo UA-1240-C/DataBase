@@ -24,25 +24,10 @@ void fn(IMailDB& con)
     {
         cout << "exception: " << e.what() << endl;
     }
-}
+    // ISXMailDB::PgMailDB mail("host4");
 
-int main()
-{
-    PgMailDB pg("host1");
+    // mail.Connect("postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require");
 
-    if (pg.Connect("asfs"))
-    {
-        int i;
-        cin >> i;
-        fn(pg);
-    }
-    else
-    {
-        cout << "Bad\n";
-    }
-    
-    // fn(pg);
-   
 
     return 0;
 }
