@@ -35,5 +35,6 @@ int main()
 
     // mail.Connect("postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require");
 
+
     return 0;
 }

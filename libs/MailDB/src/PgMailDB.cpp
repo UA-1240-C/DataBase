@@ -318,14 +318,15 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
     std::string query =
         "WITH filtered_emails AS ( "
         "    SELECT sender_id, subject, mail_body_id "
-        "    FROM emailMessages "
+        "    FROM \"emailMessages\" "
         "    WHERE recipient_id = " +
         tx.quote(user_id) + additional_condition +
         ")"
         "SELECT u.user_name AS sender_name, f.subject, m.body_content "
         "FROM filtered_emails AS f "
         "LEFT JOIN users AS u ON u.user_id = f.sender_id "
-        "LEFT JOIN 'mailBodies' AS m ON m.mail_body_id = f.mail_body_id; ";
+        "LEFT JOIN \"mailBodies\" AS m ON m.mail_body_id = f.mail_body_id; ";
+
 
     std::vector<Mail> resutl_mails;
 
@@ -335,10 +336,10 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
     }
 
     tx.exec_params(
-        "UPDATE emailMessages "
+        "UPDATE \"emailMessages\" "
         "SET is_received = TRUE "
         "FROM users "
-        "WHERE emailMessages.recipient_id = users.user_id "
+        "WHERE \"emailMessages\".recipient_id = users.user_id "
         "AND users.user_name = $1; ",
         user_name);
 

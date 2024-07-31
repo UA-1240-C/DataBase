@@ -35,6 +35,12 @@ public:
     }
     virtual ~IMailDB() = default;
 
+    IMailDB(const IMailDB&) = delete;
+    IMailDB& operator=(const IMailDB&) = delete;
+
+    IMailDB(IMailDB&&) = delete;
+    IMailDB& operator=(IMailDB&&) = delete;
+
     // TODO: Viacheslav
     virtual bool Connect(const std::string &connection_string) = 0;
     virtual void Disconnect() = 0;
