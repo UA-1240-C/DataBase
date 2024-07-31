@@ -219,6 +219,16 @@ TEST_F(PgMailDBTest, RetrieveEmailsTest)
 
 }
 
+TEST_F(PgMailDBTest, CheckFunctionsAfterDisconnect)
+{
+  pg.Disconnect();
+
+  EXPECT_THROW(pg.Login("user1","password"), std::exception);
+  EXPECT_THROW(pg.SignUp("user1","password"), std::exception);
+  EXPECT_THROW(pg.RetrieveEmails("user1"), std::exception);
+
+}
+
 
 
 int main(int argc, char **argv)

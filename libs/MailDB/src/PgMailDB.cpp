@@ -30,7 +30,6 @@ bool PgMailDB::Connect(const std::string& connection_string)
             std::cerr << e.what() << std::endl;
             return false;
         }
-        //std::cout << "con";
         return true;
 
     }

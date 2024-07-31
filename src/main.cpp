@@ -7,22 +7,15 @@
 using namespace std;
 using namespace ISXMailDB;
 
-int main()
+void fn(IMailDB& con)
 {
-    PgMailDB pg("host1");
-    // std::ifstream file("../src/test.txt");
-    // if (!file.is_open()) 
-    // {
-    //   cerr << "couldn't open a file with db tables\n"; 
-    // }
-    pg.Connect("postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require");
-    // pg.Connect("dbname=mydsb user=postgres password=password hostaddr=127.0.0.1 port=5432");
+    con.Connect("postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require");
    
     try
     {
-        pg.Login("user1", "password_hash1");
+        con.Login("user1", "password_hash1");
         
-        for (auto &mail : pg.RetrieveEmails("user1", true))
+        for (auto &mail : con.RetrieveEmails("user1", true))
         {
             cout << mail.subject << " " << mail.sender << " " << mail.body << endl;
         }
@@ -31,10 +24,25 @@ int main()
     {
         cout << "exception: " << e.what() << endl;
     }
-    // ISXMailDB::PgMailDB mail("host4");
+}
 
-    // mail.Connect("postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require");
+int main()
+{
+    PgMailDB pg("host1");
 
+    if (pg.Connect("asfs"))
+    {
+        int i;
+        cin >> i;
+        fn(pg);
+    }
+    else
+    {
+        cout << "Bad\n";
+    }
+    
+    // fn(pg);
+   
 
     return 0;
 }
