@@ -11,6 +11,14 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKe_EXPORT_COMPILE_COMMANDS": "YES"
             }
+        },
+        {   
+            "name": "release",
+            "description": "Release settings for my cmake project",
+            "inherits": "default",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
         }
 
     ]
