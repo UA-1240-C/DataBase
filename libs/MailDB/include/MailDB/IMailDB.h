@@ -19,6 +19,7 @@ struct Mail
         : sender(sender), subject(subject), body(body)
     {
     }
+    
 };
 
 class IMailDB

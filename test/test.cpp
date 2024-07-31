@@ -12,6 +12,39 @@ const char*  CONNECTION_STRING = "dbname=testmaildb user=postgres password=passw
 
 using namespace ISXMailDB;
 
+void ExecuteQueryFromFile(pqxx::work& tx, std::string filename)
+{
+   std::ifstream file(filename);
+    if (!file.is_open()) 
+    {
+      FAIL() << "couldn't open a file with db tables\n"; 
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string sql_commands = buffer.str();
+
+    tx.exec(sql_commands);
+    tx.commit();
+}
+
+bool operator==(const std::vector<Mail>& lhs, const std::vector<Mail>& rhs)
+{
+  if (lhs.size() != rhs.size())
+  {
+    return false;
+  }
+  for (size_t i = 0; i < lhs.size(); i++)
+  {
+    if(lhs[i].sender != rhs[i].sender 
+      || lhs[i].subject != rhs[i].subject 
+      || lhs[i].body != rhs[i].body)
+      return false;
+  }
+  return true;
+}
+
+
 class PgMailDBTest : public testing::Test
 {
 protected:
@@ -22,20 +55,12 @@ protected:
       FAIL() << "couldn't establish connection with test db\n";
     }
 
-    std::ifstream file("../test/db_table_creation.txt");
-    if (!file.is_open()) 
-    {
-      FAIL() << "couldn't open a file with db tables\n"; 
-    }
-
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    std::string sql_commands = buffer.str();
-
     pqxx::work tx(s_connection);
 
-    tx.exec(sql_commands);
-    tx.commit();
+    ASSERT_NO_FATAL_FAILURE(
+      ExecuteQueryFromFile(tx, "../test/db_table_creation.txt")
+    );
+
 
   }
 
@@ -148,6 +173,53 @@ TEST_F(PgMailDBTest, LoginTest)
   
   ASSERT_FALSE(pg.Login("test_user1", "hash_password"));
 }
+
+TEST_F(PgMailDBTest, SignUpWithLoginTest)
+{
+  std::vector<std::pair<std::string, std::string>> user_password_pairs =
+  {
+    {"test_user2", "hash_password2"},
+    {"test_user3", "hash_password3"},
+    {"test_user4", "hash_password4"},
+    {"test_user5", "hash_password5"},
+  }; 
+
+  for (auto [name, password] : user_password_pairs)
+  {
+     pg.SignUp(name, password);
+     EXPECT_TRUE(pg.Login(name,password));
+  }
+}
+
+TEST_F(PgMailDBTest, RetrieveEmailsTest)
+{
+  pqxx::work tx(s_connection);
+  
+  ASSERT_NO_FATAL_FAILURE(
+    ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
+  );
+
+  EXPECT_THROW(pg.RetrieveEmails("non-existent user"), MailException);
+
+  std::vector<Mail> expected_result = {{"user2", "Subject 2", "This is the body of the second email."}, 
+  {"user3", "Subject 3", "This is the body of the third email."}};
+
+  std::vector<Mail> result = pg.RetrieveEmails("user1");
+
+  EXPECT_TRUE(expected_result==result);
+
+  result = pg.RetrieveEmails("user1");
+
+  EXPECT_EQ(0, result.size());
+
+  result = pg.RetrieveEmails("user1", true);
+
+  EXPECT_TRUE(expected_result==result);
+
+
+}
+
+
 
 int main(int argc, char **argv)
 {
