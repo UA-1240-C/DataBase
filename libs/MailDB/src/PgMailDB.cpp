@@ -30,7 +30,7 @@ bool PgMailDB::Connect(const std::string& connection_string)
             std::cerr << e.what() << std::endl;
             return false;
         }
-        std::cout << "con";
+        //std::cout << "con";
         return true;
 
     }
@@ -115,7 +115,8 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
     }
     catch (pqxx::unexpected_rows &e)
     {
-        throw MailException("Invalid user name or password");
+        //throw MailException("Invalid user name or password");
+        return false;
     }
 
     return true;
