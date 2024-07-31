@@ -57,7 +57,7 @@ bool PgMailDB::IsConnected() const
     return false;
 }
 
-bool PgMailDB::SignUp(const std::string_view user_name, const std::string_view hash_password)
+void PgMailDB::SignUp(const std::string_view user_name, const std::string_view hash_password)
 {
     pqxx::work tx(*m_conn);
 
@@ -75,8 +75,6 @@ bool PgMailDB::SignUp(const std::string_view user_name, const std::string_view h
         throw MailException("User already exists");
     }
     tx.commit();
-
-    return true;
 }
 
 void PgMailDB::InsertHost(const std::string_view host_name)
@@ -96,7 +94,7 @@ void PgMailDB::InsertHost(const std::string_view host_name)
     tx.commit();
 }
 
-bool PgMailDB::Login(const std::string_view user_name, const std::string_view hash_password)
+void PgMailDB::Login(const std::string_view user_name, const std::string_view hash_password)
 {
     pqxx::nontransaction ntx(*m_conn);
 
@@ -109,10 +107,8 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
     }
     catch (pqxx::unexpected_rows &e)
     {
-        return false;
+        throw MailException("Invalid user name or password");
     }
-
-    return true;
 }
 
  std::vector<User> PgMailDB::RetrieveUserInfo(const std::string_view user_name)
@@ -428,8 +424,16 @@ bool PgMailDB::DeleteUser(const std::string_view user_name, const std::string_vi
         std::cerr << e.what() << std::endl;
         return false;
     }
+    
+    try 
+    {
+        Login(user_name, hash_password);
+    }
+    catch (const MailException& e) {
+        return false;
+    }
 
-    if (!Login(user_name, hash_password) || !DeleteEmail(user_name))
+    if (!DeleteEmail(user_name))
     {
         return false;
     }

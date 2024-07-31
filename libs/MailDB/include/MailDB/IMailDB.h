@@ -58,8 +58,8 @@ public:
     virtual bool IsConnected() const = 0;
 
     // TODO: Denys
-    virtual bool SignUp(const std::string_view user_name, const std::string_view hash_password) = 0;
-    virtual bool Login(const std::string_view user_name, const std::string_view hash_password) = 0;
+    virtual void SignUp(const std::string_view user_name, const std::string_view hash_password) = 0;
+    virtual void Login(const std::string_view user_name, const std::string_view hash_password) = 0;
 
     // TODO: Viacheslav
     virtual std::vector<User> RetrieveUserInfo(const std::string_view user_name = "") = 0;

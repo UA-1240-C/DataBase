@@ -20,8 +20,8 @@ public:
     virtual bool IsConnected() const override;
 
     // TODO: Denys
-    virtual bool SignUp(const std::string_view user_name, const std::string_view hash_password) override;
-    virtual bool Login(const std::string_view user_name, const std::string_view hash_password) override;
+    virtual void SignUp(const std::string_view user_name, const std::string_view hash_password) override;
+    virtual void Login(const std::string_view user_name, const std::string_view hash_password) override;
 
     // TODO: Viacheslav
     virtual std::vector<User> RetrieveUserInfo(const std::string_view user_name = "") override;

@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include "<PATH>/PgMailDB.h"
+#include "MailDB/PgMailDB.h"
 
 class DatabaseFixture : public testing::Test
 {
