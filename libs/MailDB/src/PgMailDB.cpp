@@ -1,12 +1,8 @@
 #include <iostream>
 #include <memory>
 
-#include <pqxx/except>
-
-#include "PgMailDB.h"
-
-#include <iostream>
 #include "MailException.h"
+#include "PgMailDB.h"
 
 namespace ISXMailDB
 {
@@ -57,10 +53,8 @@ bool PgMailDB::IsConnected() const
     {
         return m_conn->is_open();
     }
-    else
-    {
-        throw pqxx::broken_connection();
-    }
+
+    return false;
 }
 
 bool PgMailDB::SignUp(const std::string_view user_name, const std::string_view hash_password)
@@ -115,14 +109,13 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
     }
     catch (pqxx::unexpected_rows &e)
     {
-        //throw MailException("Invalid user name or password");
         return false;
     }
 
     return true;
 }
 
- std::vector<std::vector<std::string>> PgMailDB::RetrieveUserInfo(const std::string_view user_name)
+ std::vector<User> PgMailDB::RetrieveUserInfo(const std::string_view user_name)
     {
         try 
         {
@@ -134,35 +127,50 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
         catch (const std::exception& e)
         {
             std::cerr << e.what() << std::endl;
-            return {};
+            return std::vector<User>();
         }
 
 
         pqxx::nontransaction nontransaction(*m_conn);
         pqxx::result user_query_result;
-        if (user_name.empty())
-        {
-            user_query_result = nontransaction.exec_params(
-                "SELECT * FROM public.\"users\""
-            );
+        try {
+            if (user_name.empty())
+            {
+                user_query_result = nontransaction.exec_params(
+                    "SELECT u.user_name, u.password_hash, h.host_name FROM users u "
+                    "LEFT JOIN hosts h ON u.host_id = h.host_id"
+                );
+            }
+            else
+            {
+                user_query_result = nontransaction.exec_params(
+                    "SELECT u.user_name, u.password_hash, h.host_name FROM users u "
+                    "LEFT JOIN hosts h ON u.host_id = h.host_id "
+                    "WHERE u.user_name = $1"
+                    , nontransaction.esc(user_name)
+                );
+            }
         }
-        else
+        catch (const std::exception& e)
         {
-            user_query_result = nontransaction.exec_params(
-                "SELECT * FROM public.\"users\" "
-                "WHERE user_name = $1"
-                , nontransaction.quote(user_name)
-            );
+            std::cerr << "Transaction failed: " << e.what() << std::endl;
+            return std::vector<User>();
         }
 
-        std::vector<std::vector<std::string>> info;
+        std::vector<User> info;
         if (!user_query_result.empty())
         {
-            WriteQueryResultToStorage(user_query_result, info);
+            for (auto&& row : user_query_result)
+            {
+                info.push_back(User(row.at("user_name").as<std::string>()
+                                  , row.at("password_hash").as<std::string>()
+                                  , row.at("host_name").as<std::string>()));
+            }
+
             return info;
         }
 
-        return std::vector<std::vector<std::string>>();
+        return std::vector<User>();
     }
 
 bool PgMailDB::InsertEmailContent(const std::string_view content)
@@ -181,16 +189,17 @@ bool PgMailDB::InsertEmailContent(const std::string_view content)
 
     try {
         pqxx::work transaction(*m_conn);
+
         try 
         {
             uint32_t content_id = transaction.query_value<uint32_t>(
-                "SELECT mail_body_id FROM public.\"mailBodies\" WHERE body_content = " + transaction.quote(content)
+                "SELECT mail_body_id FROM \"mailBodies\" WHERE body_content = " + transaction.quote(content)
             );
         }
         catch (const std::exception& e) 
         {
             transaction.exec_params(
-                "INSERT INTO public.\"mailBodies\" (body_content)VALUES($1) "
+                "INSERT INTO \"mailBodies\" (body_content)VALUES($1) "
                 "ON CONFLICT(body_content) DO NOTHING "
                 , content
             );
@@ -206,7 +215,7 @@ bool PgMailDB::InsertEmailContent(const std::string_view content)
     return true;
 }
 
-std::vector<std::vector<std::string>> PgMailDB::RetrieveEmailContentInfo(const std::string_view content)
+std::vector<std::string> PgMailDB::RetrieveEmailContentInfo(const std::string_view content)
 {
     try
     {
@@ -217,34 +226,45 @@ std::vector<std::vector<std::string>> PgMailDB::RetrieveEmailContentInfo(const s
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
-        return std::vector<std::vector<std::string>>();
+        return std::vector<std::string>();
     }
 
     pqxx::nontransaction nontransaction(*m_conn);
     pqxx::result content_query_result;
-    if (content.empty())
-    {
-        content_query_result = nontransaction.exec_params(
-            "SELECT * FROM public.\"mailBodies\""
-        );
+    try {
+        if (content.empty())
+        {
+            content_query_result = nontransaction.exec_params(
+                "SELECT body_content FROM \"mailBodies\""
+            );
+        }
+        else
+        {
+            content_query_result = nontransaction.exec_params(
+                "SELECT body_content FROM \"mailBodies\" "
+                "WHERE body_content = $1"
+                , nontransaction.esc(content)
+            );
+        }
     }
-    else
+    catch (const std::exception& e)
     {
-        content_query_result = nontransaction.exec_params(
-            "SELECT * FROM public.\"mailBodies\" "
-            "WHERE body_content = $1"
-            , nontransaction.quote(content)
-        );
+        std::cerr << "Transaction failed: " << e.what() << std::endl;
+        return std::vector<std::string>();
     }
 
-    std::vector<std::vector<std::string>> info{};
+    std::vector<std::string> info{};
     if (!content_query_result.empty())
     {
-        WriteQueryResultToStorage(content_query_result, info);
+        for (auto&& row : content_query_result)
+        {
+            info.push_back(row.at("body_content").as<std::string>());
+        }
+
         return info;
     }
 
-    return std::vector<std::vector<std::string>>();
+    return std::vector<std::string>();
 }
 
 bool PgMailDB::InsertEmail(const std::string_view sender, const std::string_view receiver,
@@ -269,13 +289,13 @@ bool PgMailDB::InsertEmail(const std::string_view sender, const std::string_view
         pqxx::nontransaction nontransaction(*m_conn);
         try {
             sender_id = nontransaction.query_value<uint32_t>(
-                "SELECT user_id FROM public.\"users\" WHERE user_name = " + nontransaction.quote(sender)
+                "SELECT user_id FROM users WHERE user_name = " + nontransaction.quote(sender)
             );
             receiver_id = nontransaction.query_value<uint32_t>(
-                "SELECT user_id FROM public.\"users\" WHERE user_name = " + nontransaction.quote(receiver)
+                "SELECT user_id FROM users WHERE user_name = " + nontransaction.quote(receiver)
             );
             body_id = nontransaction.query_value<uint32_t>(
-                "SELECT mail_body_id FROM public.\"mailBodies\" WHERE body_content = " + nontransaction.quote(body)
+                "SELECT mail_body_id FROM \"mailBodies\" WHERE body_content = " + nontransaction.quote(body)
             );
         }
         catch(const pqxx::unexpected_rows& e)
@@ -288,7 +308,7 @@ bool PgMailDB::InsertEmail(const std::string_view sender, const std::string_view
     try {
         pqxx::work transaction(*m_conn);
         transaction.exec_params(
-            "INSERT INTO public.\"emailMessages\" (sender_id, recipient_id, subject, mail_body_id, is_received) "
+            "INSERT INTO \"emailMessages\" (sender_id, recipient_id, subject, mail_body_id, is_received) "
             "VALUES ($1, $2, $3, $4, false) "
             , sender_id, receiver_id,
             subject, body_id
@@ -367,7 +387,7 @@ bool PgMailDB::DeleteEmail(const std::string_view user_name)
         pqxx::nontransaction nontransaction(*m_conn);
         try {
             user_info = nontransaction.query_value<uint32_t>(
-                "SELECT user_id FROM public.\"users\" WHERE user_name = " + nontransaction.quote(user_name)
+                "SELECT user_id FROM users WHERE user_name = " + nontransaction.quote(user_name)
             );
         }
         catch (const pqxx::unexpected_rows& e)
@@ -381,7 +401,7 @@ bool PgMailDB::DeleteEmail(const std::string_view user_name)
     {
         pqxx::work transaction(*m_conn);
         transaction.exec_params(
-            "DELETE FROM public.\"emailMessages\" "
+            "DELETE FROM \"emailMessages\" "
             "WHERE sender_id = $1 OR recipient_id = $1"
             , user_info
         );
@@ -410,7 +430,7 @@ bool PgMailDB::DeleteUser(const std::string_view user_name, const std::string_vi
         return false;
     }
 
-    if (!DeleteEmail(user_name))
+    if (!Login(user_name, hash_password) || !DeleteEmail(user_name))
     {
         return false;
     }
@@ -419,8 +439,8 @@ bool PgMailDB::DeleteUser(const std::string_view user_name, const std::string_vi
     {
         pqxx::work transaction(*m_conn);
         transaction.exec_params(
-            "DELETE FROM public.\"users\" "
-            "WHERE user_name = $1 AND password = $2"
+            "DELETE FROM users "
+            "WHERE user_name = $1 AND password_hash = $2"
             , transaction.esc(user_name), transaction.esc(hash_password)
         );
         transaction.commit();
@@ -445,17 +465,4 @@ uint32_t PgMailDB::RetriveUserId(const std::string_view user_name, pqxx::transac
         throw MailException("User doesn't exist");
     };
 }  
-
-void PgMailDB::WriteQueryResultToStorage(const pqxx::result& query_result, std::vector<std::vector<std::string>>& info)
-{
-    for (auto&& row : query_result)
-    {
-        info.push_back(std::vector<std::string>());
-        for (auto&& column : row)
-        {
-            info.back().push_back(column.as<std::string>());
-        }
-    }
-}
-
 }
