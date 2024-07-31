@@ -1,5 +1,4 @@
 #include <memory>
-#include <exception>
 
 #include <gtest/gtest.h>
 
@@ -24,9 +23,10 @@ class DatabaseFixture : public testing::Test
 
     virtual void TearDown() override
     {
-        pqxx::work transaction(*(m_database->GetConnection()));
+        pqxx::connection conn("dbname=<> user=postgres password=<> hostaddr=127.0.0.1 port=5432");
+        pqxx::work transaction(conn);
         transaction.exec(
-            "TRUNCATE public.\"emailMessages\", public.\"mailBodies\", public.\"users\" RESTART IDENTITY"
+            "TRUNCATE \"emailMessages\", \"mailBodies\", users RESTART IDENTITY"
         );
         transaction.commit();
     }
