@@ -11,12 +11,12 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE mailBodies (
+CREATE TABLE 'mailBodies' (
     mail_body_id SERIAL PRIMARY KEY,
     body_content TEXT NOT NULL
 );
 
-CREATE TABLE emailMessages (
+CREATE TABLE 'emailMessages' (
     email_message_id SERIAL PRIMARY KEY,
     sender_id INTEGER REFERENCES users(user_id),
     recipient_id INTEGER REFERENCES users(user_id),

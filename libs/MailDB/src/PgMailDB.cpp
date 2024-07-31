@@ -325,7 +325,7 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
         "SELECT u.user_name AS sender_name, f.subject, m.body_content "
         "FROM filtered_emails AS f "
         "LEFT JOIN users AS u ON u.user_id = f.sender_id "
-        "LEFT JOIN mailBodies AS m ON m.mail_body_id = f.mail_body_id; ";
+        "LEFT JOIN 'mailBodies' AS m ON m.mail_body_id = f.mail_body_id; ";
 
     std::vector<Mail> resutl_mails;
 
