@@ -153,7 +153,7 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
         }
         catch (const std::exception& e)
         {
-            std::cout << "Given value doesn't exist in database. Aborting operation.\n";
+            std::cerr << "Transaction failed: " << e.what() << std::endl;
             return std::vector<User>();
         }
 
@@ -248,7 +248,7 @@ std::vector<std::string> PgMailDB::RetrieveEmailContentInfo(const std::string_vi
     }
     catch (const std::exception& e)
     {
-        std::cout << "Given value doesn't exist in database. Aborting operation.\n";
+        std::cerr << "Transaction failed: " << e.what() << std::endl;
         return std::vector<std::string>();
     }
 
