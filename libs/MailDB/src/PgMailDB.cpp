@@ -1,6 +1,7 @@
 #include <iostream>
 #include <memory>
 
+#include "MailException.h"
 #include "PgMailDB.h"
 
 namespace ISXMailDB

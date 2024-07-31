@@ -198,31 +198,8 @@ TEST_F(DatabaseFixture, Delete_Existing_User_Test)
 
 TEST_F(DatabaseFixture, Delete_Unexisting_User_Test)
 {
-    EXPECT_THROW({
-        try
-        {
-            m_database->DeleteUser("user1213", "pass1");
-        }
-        catch (const std::exception& e)
-        {
-            EXPECT_STREQ("Invalid user name or password", e.what());
-            throw;
-        }
-        }, std::exception);
-    
-    EXPECT_THROW({
-        try
-        {
-            m_database->DeleteUser("user1", "pass1dasdasd");
-        }
-        catch (const std::exception& e)
-        {
-            EXPECT_STREQ("Invalid user name or password", e.what());
-            throw;
-        }
-        }, std::exception);
-
-
+    EXPECT_FALSE(m_database->DeleteUser("user1213", "pass1"));
+    EXPECT_FALSE(m_database->DeleteUser("user1", "pass1dasdasd"));
 }
 
 int main(int argc, char **argv)
