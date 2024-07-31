@@ -133,21 +133,28 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
 
         pqxx::nontransaction nontransaction(*m_conn);
         pqxx::result user_query_result;
-        if (user_name.empty())
-        {
-            user_query_result = nontransaction.exec_params(
-                "SELECT u.user_name, u.password_hash, h.host_name FROM public.\"users\" u "
-                "LEFT JOIN public.\"hosts\" h ON u.host_id = h.host_id"
-            );
+        try {
+            if (user_name.empty())
+            {
+                user_query_result = nontransaction.exec_params(
+                    "SELECT u.user_name, u.password_hash, h.host_name FROM public.\"users\" u "
+                    "LEFT JOIN public.\"hosts\" h ON u.host_id = h.host_id"
+                );
+            }
+            else
+            {
+                user_query_result = nontransaction.exec_params(
+                    "SELECT u.user_name, u.password_hash, h.host_name FROM public.\"users\" u "
+                    "LEFT JOIN public.\"hosts\" h ON u.host_id = h.host_id "
+                    "WHERE u.user_name = $1"
+                    , nontransaction.esc(user_name)
+                );
+            }
         }
-        else
+        catch (const std::exception& e)
         {
-            user_query_result = nontransaction.exec_params(
-                "SELECT u.user_name, u.password_hash, h.host_name FROM public.\"users\" u "
-                "LEFT JOIN public.\"hosts\" h ON u.host_id = h.host_id "
-                "WHERE u.user_name = $1"
-                , nontransaction.esc(user_name)
-            );
+            std::cout << "Given value doesn't exist in database. Aborting operation.\n";
+            return std::vector<User>();
         }
 
         std::vector<User> info;
@@ -223,19 +230,26 @@ std::vector<std::string> PgMailDB::RetrieveEmailContentInfo(const std::string_vi
 
     pqxx::nontransaction nontransaction(*m_conn);
     pqxx::result content_query_result;
-    if (content.empty())
-    {
-        content_query_result = nontransaction.exec_params(
-            "SELECT body_content FROM public.\"mailBodies\""
-        );
+    try {
+        if (content.empty())
+        {
+            content_query_result = nontransaction.exec_params(
+                "SELECT body_content FROM public.\"mailBodies\""
+            );
+        }
+        else
+        {
+            content_query_result = nontransaction.exec_params(
+                "SELECT body_content FROM public.\"mailBodies\" "
+                "WHERE body_content = $1"
+                , nontransaction.esc(content)
+            );
+        }
     }
-    else
+    catch (const std::exception& e)
     {
-        content_query_result = nontransaction.exec_params(
-            "SELECT body_content FROM public.\"mailBodies\" "
-            "WHERE body_content = $1"
-            , nontransaction.esc(content)
-        );
+        std::cout << "Given value doesn't exist in database. Aborting operation.\n";
+        return std::vector<std::string>();
     }
 
     std::vector<std::string> info{};
