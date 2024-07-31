@@ -76,15 +76,14 @@ bool PgMailDB::SignUp(const std::string_view user_name, const std::string_view h
     }
     catch (pqxx::unexpected_rows &e)
     {
-        throw std::logic_error("User already exists");
+        throw MailException("User already exists");
     }
-
     tx.commit();
 
     return true;
 }
 
- void PgMailDB::InsertHost(const std::string_view host_name)
+void PgMailDB::InsertHost(const std::string_view host_name)
 {
     pqxx::work tx(*m_conn);
     try
@@ -114,7 +113,8 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
     }
     catch (pqxx::unexpected_rows &e)
     {
-        throw std::logic_error("Invalid user name or password");
+        //throw MailException("Invalid user name or password");
+        return false;
     }
 
     return true;
@@ -467,7 +467,7 @@ uint32_t PgMailDB::RetriveUserId(const std::string_view user_name, pqxx::transac
     }
     catch (pqxx::unexpected_rows &e)
     {
-        throw std::logic_error("user doesn't exist");
+        throw MailException("User doesn't exist");
     };
 }  
 }
