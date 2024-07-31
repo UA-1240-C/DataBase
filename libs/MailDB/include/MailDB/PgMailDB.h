@@ -19,8 +19,6 @@ public:
     virtual void Disconnect() override;
     virtual bool IsConnected() const override;
 
-    std::shared_ptr<pqxx::connection> GetConnection();
-
     // TODO: Denys
     virtual bool SignUp(const std::string_view user_name, const std::string_view hash_password) override;
     virtual bool Login(const std::string_view user_name, const std::string_view hash_password) override;
@@ -44,7 +42,7 @@ protected:
 
     uint32_t RetriveUserId(const std::string_view user_name, pqxx::transaction_base &ntx) const;
 
-    std::shared_ptr<pqxx::connection> m_conn;
+    std::unique_ptr<pqxx::connection> m_conn;
 };
 
 }

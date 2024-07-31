@@ -19,7 +19,7 @@ PgMailDB::~PgMailDB()
 bool PgMailDB::Connect(const std::string& connection_string)
     {
         try {
-            m_conn = std::make_shared<pqxx::connection>(connection_string);
+            m_conn = std::make_unique<pqxx::connection>(connection_string);
             InsertHost(m_host_name);
         }
         catch (const std::exception &e) {
@@ -55,11 +55,6 @@ bool PgMailDB::IsConnected() const
     }
 
     return false;
-}
-
-std::shared_ptr<pqxx::connection> PgMailDB::GetConnection()
-{
-    return m_conn;
 }
 
 bool PgMailDB::SignUp(const std::string_view user_name, const std::string_view hash_password)
@@ -114,7 +109,6 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
     }
     catch (pqxx::unexpected_rows &e)
     {
-        //throw MailException("Invalid user name or password");
         return false;
     }
 
@@ -143,15 +137,15 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
             if (user_name.empty())
             {
                 user_query_result = nontransaction.exec_params(
-                    "SELECT u.user_name, u.password_hash, h.host_name FROM public.\"users\" u "
-                    "LEFT JOIN public.\"hosts\" h ON u.host_id = h.host_id"
+                    "SELECT u.user_name, u.password_hash, h.host_name FROM users u "
+                    "LEFT JOIN hosts h ON u.host_id = h.host_id"
                 );
             }
             else
             {
                 user_query_result = nontransaction.exec_params(
-                    "SELECT u.user_name, u.password_hash, h.host_name FROM public.\"users\" u "
-                    "LEFT JOIN public.\"hosts\" h ON u.host_id = h.host_id "
+                    "SELECT u.user_name, u.password_hash, h.host_name FROM users u "
+                    "LEFT JOIN hosts h ON u.host_id = h.host_id "
                     "WHERE u.user_name = $1"
                     , nontransaction.esc(user_name)
                 );
@@ -199,13 +193,13 @@ bool PgMailDB::InsertEmailContent(const std::string_view content)
         try 
         {
             uint32_t content_id = transaction.query_value<uint32_t>(
-                "SELECT mail_body_id FROM public.\"mailBodies\" WHERE body_content = " + transaction.quote(content)
+                "SELECT mail_body_id FROM \"mailBodies\" WHERE body_content = " + transaction.quote(content)
             );
         }
         catch (const std::exception& e) 
         {
             transaction.exec_params(
-                "INSERT INTO public.\"mailBodies\" (body_content)VALUES($1) "
+                "INSERT INTO \"mailBodies\" (body_content)VALUES($1) "
                 "ON CONFLICT(body_content) DO NOTHING "
                 , content
             );
@@ -241,13 +235,13 @@ std::vector<std::string> PgMailDB::RetrieveEmailContentInfo(const std::string_vi
         if (content.empty())
         {
             content_query_result = nontransaction.exec_params(
-                "SELECT body_content FROM public.\"mailBodies\""
+                "SELECT body_content FROM \"mailBodies\""
             );
         }
         else
         {
             content_query_result = nontransaction.exec_params(
-                "SELECT body_content FROM public.\"mailBodies\" "
+                "SELECT body_content FROM \"mailBodies\" "
                 "WHERE body_content = $1"
                 , nontransaction.esc(content)
             );
@@ -295,13 +289,13 @@ bool PgMailDB::InsertEmail(const std::string_view sender, const std::string_view
         pqxx::nontransaction nontransaction(*m_conn);
         try {
             sender_id = nontransaction.query_value<uint32_t>(
-                "SELECT user_id FROM public.\"users\" WHERE user_name = " + nontransaction.quote(sender)
+                "SELECT user_id FROM users WHERE user_name = " + nontransaction.quote(sender)
             );
             receiver_id = nontransaction.query_value<uint32_t>(
-                "SELECT user_id FROM public.\"users\" WHERE user_name = " + nontransaction.quote(receiver)
+                "SELECT user_id FROM users WHERE user_name = " + nontransaction.quote(receiver)
             );
             body_id = nontransaction.query_value<uint32_t>(
-                "SELECT mail_body_id FROM public.\"mailBodies\" WHERE body_content = " + nontransaction.quote(body)
+                "SELECT mail_body_id FROM \"mailBodies\" WHERE body_content = " + nontransaction.quote(body)
             );
         }
         catch(const pqxx::unexpected_rows& e)
@@ -314,7 +308,7 @@ bool PgMailDB::InsertEmail(const std::string_view sender, const std::string_view
     try {
         pqxx::work transaction(*m_conn);
         transaction.exec_params(
-            "INSERT INTO public.\"emailMessages\" (sender_id, recipient_id, subject, mail_body_id, is_received) "
+            "INSERT INTO \"emailMessages\" (sender_id, recipient_id, subject, mail_body_id, is_received) "
             "VALUES ($1, $2, $3, $4, false) "
             , sender_id, receiver_id,
             subject, body_id
@@ -333,7 +327,6 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
 {
     pqxx::work tx(*m_conn);
 
-    // add check if user exist with current host
     uint32_t user_id = RetriveUserId(user_name, tx);
 
     std::string additional_condition = "";
@@ -345,14 +338,14 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
     std::string query =
         "WITH filtered_emails AS ( "
         "    SELECT sender_id, subject, mail_body_id "
-        "    FROM public.\"emailMessages\" "
+        "    FROM \"emailMessages\" "
         "    WHERE recipient_id = " +
         tx.quote(user_id) + additional_condition +
         ")"
         "SELECT u.user_name AS sender_name, f.subject, m.body_content "
         "FROM filtered_emails AS f "
-        "LEFT JOIN public.\"users\" AS u ON u.user_id = f.sender_id "
-        "LEFT JOIN public.\"mailBodies\" AS m ON m.mail_body_id = f.mail_body_id; ";
+        "LEFT JOIN users AS u ON u.user_id = f.sender_id "
+        "LEFT JOIN \"mailBodies\" AS m ON m.mail_body_id = f.mail_body_id; ";
 
     std::vector<Mail> resutl_mails;
 
@@ -362,11 +355,11 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
     }
 
     tx.exec_params(
-        "UPDATE public.\"emailMessages\" "
+        "UPDATE \"emailMessages\" "
         "SET is_received = TRUE "
-        "FROM public.\"users\" "
-        "WHERE public.\"emailMessages\".recipient_id = public.\"users\".user_id "
-        "AND public.\"users\".user_name = $1; ",
+        "FROM users "
+        "WHERE \"emailMessages\".recipient_id = users.user_id "
+        "AND users.user_name = $1; ",
         user_name);
 
     tx.commit();
@@ -393,7 +386,7 @@ bool PgMailDB::DeleteEmail(const std::string_view user_name)
         pqxx::nontransaction nontransaction(*m_conn);
         try {
             user_info = nontransaction.query_value<uint32_t>(
-                "SELECT user_id FROM public.\"users\" WHERE user_name = " + nontransaction.quote(user_name)
+                "SELECT user_id FROM users WHERE user_name = " + nontransaction.quote(user_name)
             );
         }
         catch (const pqxx::unexpected_rows& e)
@@ -407,7 +400,7 @@ bool PgMailDB::DeleteEmail(const std::string_view user_name)
     {
         pqxx::work transaction(*m_conn);
         transaction.exec_params(
-            "DELETE FROM public.\"emailMessages\" "
+            "DELETE FROM \"emailMessages\" "
             "WHERE sender_id = $1 OR recipient_id = $1"
             , user_info
         );
@@ -445,7 +438,7 @@ bool PgMailDB::DeleteUser(const std::string_view user_name, const std::string_vi
     {
         pqxx::work transaction(*m_conn);
         transaction.exec_params(
-            "DELETE FROM public.\"users\" "
+            "DELETE FROM users "
             "WHERE user_name = $1 AND password_hash = $2"
             , transaction.esc(user_name), transaction.esc(hash_password)
         );
@@ -464,7 +457,7 @@ uint32_t PgMailDB::RetriveUserId(const std::string_view user_name, pqxx::transac
 {
     try
     {
-        return ntx.query_value<uint32_t>("SELECT user_id FROM public.\"users\" WHERE user_name = " + ntx.quote(user_name) + "  AND host_id = 1");
+        return ntx.query_value<uint32_t>("SELECT user_id FROM users WHERE user_name = " + ntx.quote(user_name) + "  AND host_id = 1");
     }
     catch (pqxx::unexpected_rows &e)
     {
