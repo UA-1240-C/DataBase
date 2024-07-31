@@ -9,9 +9,12 @@ using namespace ISXMailDB;
 
 int main()
 {
-    // PgMailDB pg("host1");
-    // // pg.Connect("postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require");
+    // PgMailDB pg("host1"), pg2("host2");
+    // // // pg.Connect("postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require");
     // pg.Connect("dbname=mydb user=postgres password=password hostaddr=127.0.0.1 port=5432");
+    // pg2.Connect("dbname=mydb user=postgres password=password hostaddr=127.0.0.1 port=5432");
+
+
 
     // ofstream output("errors.txt");
     // try

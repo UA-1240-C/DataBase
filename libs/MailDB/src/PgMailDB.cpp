@@ -30,7 +30,7 @@ bool PgMailDB::Connect(const std::string& connection_string)
             std::cerr << e.what() << std::endl;
             return false;
         }
-
+        std::cout << "con";
         return true;
 
     }
@@ -306,7 +306,6 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
 {
     pqxx::work tx(*m_conn);
 
-    // add check if user exist with current host
     uint32_t user_id = RetriveUserId(user_name, tx);
 
     std::string additional_condition = "";
