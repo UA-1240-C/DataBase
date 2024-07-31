@@ -18,7 +18,7 @@ PgMailDB::~PgMailDB()
 bool PgMailDB::Connect(const std::string& connection_string)
     {
         try {
-            m_conn = std::make_unique<pqxx::connection>(connection_string);
+            m_conn = std::make_shared<pqxx::connection>(connection_string);
             InsertHost(m_host_name);
         }
         catch (const std::exception &e) {
@@ -54,6 +54,11 @@ bool PgMailDB::IsConnected() const
     }
 
     return false;
+}
+
+std::shared_ptr<pqxx::connection> PgMailDB::GetConnection()
+{
+    return m_conn;
 }
 
 bool PgMailDB::SignUp(const std::string_view user_name, const std::string_view hash_password)
@@ -189,6 +194,7 @@ bool PgMailDB::InsertEmailContent(const std::string_view content)
 
     try {
         pqxx::work transaction(*m_conn);
+
         try 
         {
             uint32_t content_id = transaction.query_value<uint32_t>(
@@ -338,14 +344,14 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
     std::string query =
         "WITH filtered_emails AS ( "
         "    SELECT sender_id, subject, mail_body_id "
-        "    FROM emailMessages "
+        "    FROM public.\"emailMessages\" "
         "    WHERE recipient_id = " +
         tx.quote(user_id) + additional_condition +
         ")"
         "SELECT u.user_name AS sender_name, f.subject, m.body_content "
         "FROM filtered_emails AS f "
-        "LEFT JOIN users AS u ON u.user_id = f.sender_id "
-        "LEFT JOIN mailBodies AS m ON m.mail_body_id = f.mail_body_id; ";
+        "LEFT JOIN public.\"users\" AS u ON u.user_id = f.sender_id "
+        "LEFT JOIN public.\"mailBodies\" AS m ON m.mail_body_id = f.mail_body_id; ";
 
     std::vector<Mail> resutl_mails;
 
@@ -355,11 +361,11 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
     }
 
     tx.exec_params(
-        "UPDATE emailMessages "
+        "UPDATE public.\"emailMessages\" "
         "SET is_received = TRUE "
-        "FROM users "
-        "WHERE emailMessages.recipient_id = users.user_id "
-        "AND users.user_name = $1; ",
+        "FROM public.\"users\" "
+        "WHERE public.\"emailMessages\".recipient_id = public.\"users\".user_id "
+        "AND public.\"users\".user_name = $1; ",
         user_name);
 
     tx.commit();
@@ -429,7 +435,7 @@ bool PgMailDB::DeleteUser(const std::string_view user_name, const std::string_vi
         return false;
     }
 
-    if (!DeleteEmail(user_name))
+    if (!Login(user_name, hash_password) || !DeleteEmail(user_name))
     {
         return false;
     }
@@ -439,7 +445,7 @@ bool PgMailDB::DeleteUser(const std::string_view user_name, const std::string_vi
         pqxx::work transaction(*m_conn);
         transaction.exec_params(
             "DELETE FROM public.\"users\" "
-            "WHERE user_name = $1 AND password = $2"
+            "WHERE user_name = $1 AND password_hash = $2"
             , transaction.esc(user_name), transaction.esc(hash_password)
         );
         transaction.commit();
@@ -457,7 +463,7 @@ uint32_t PgMailDB::RetriveUserId(const std::string_view user_name, pqxx::transac
 {
     try
     {
-        return ntx.query_value<uint32_t>("SELECT user_id FROM users WHERE user_name = " + ntx.quote(user_name) + "  AND host_id = 1");
+        return ntx.query_value<uint32_t>("SELECT user_id FROM public.\"users\" WHERE user_name = " + ntx.quote(user_name) + "  AND host_id = 1");
     }
     catch (pqxx::unexpected_rows &e)
     {
