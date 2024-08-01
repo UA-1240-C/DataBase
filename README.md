@@ -12,3 +12,5 @@ PgMailDB pg("host or server name");
 // to connect to remote db
 
 ```
+# Database
+ER diagram https://lucid.app/lucidchart/95544ac2-f894-4635-9e8f-5bbcb3618d7f/edit?view_items=4xwLouG-UXPv&invitationId=inv_6d37cbf3-607e-45b2-84d3-daaf9d50173c
