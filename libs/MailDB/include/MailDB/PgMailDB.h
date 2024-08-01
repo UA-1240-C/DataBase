@@ -35,6 +35,7 @@ public:
 
     // TODO: Denys
     virtual std::vector<Mail> RetrieveEmails(const std::string_view user_name, bool should_retrieve_all = false) const override;
+    virtual void MarkEmailsAsReceived(const std::string_view user_name) override;
     virtual bool UserExists(const std::string_view user_name) override;
 
 

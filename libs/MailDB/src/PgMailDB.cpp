@@ -311,9 +311,9 @@ void PgMailDB::InsertEmail(const std::string_view sender, std::vector<std::strin
 
 std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, bool should_retrieve_all) const
 {
-    pqxx::work tx(*m_conn);
+    pqxx::nontransaction ntx(*m_conn);
 
-    uint32_t user_id = RetriveUserId(user_name, tx);
+    uint32_t user_id = RetriveUserId(user_name, ntx);
 
     std::string additional_condition = "";
     if (!should_retrieve_all)
@@ -326,31 +326,39 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
         "    SELECT sender_id, subject, mail_body_id "
         "    FROM \"emailMessages\" "
         "    WHERE recipient_id = " +
-        tx.quote(user_id) + additional_condition +
+        ntx.quote(user_id) + additional_condition +
         ")"
         "SELECT u.user_name AS sender_name, f.subject, m.body_content "
         "FROM filtered_emails AS f "
         "LEFT JOIN users AS u ON u.user_id = f.sender_id "
-        "LEFT JOIN \"mailBodies\" AS m ON m.mail_body_id = f.mail_body_id; ";
+        "LEFT JOIN \"mailBodies\" AS m ON m.mail_body_id = f.mail_body_id "
+        "ORDER BY f.sent_at DESC; ";
 
     std::vector<Mail> resutl_mails;
 
-    for (auto [sender, subject, body] : tx.query<std::string, std::string, std::string>(query))
+    for (auto [sender, subject, body] : ntx.query<std::string, std::string, std::string>(query))
     {
         resutl_mails.emplace_back(sender, subject, body);
     }
 
+    return resutl_mails;
+}
+
+void PgMailDB::MarkEmailsAsReceived(const std::string_view user_name)
+{
+
+    pqxx::work tx(*m_conn);
+
+    uint32_t user_id = RetriveUserId(user_name, tx);
+
     tx.exec_params(
         "UPDATE \"emailMessages\" "
         "SET is_received = TRUE "
-        "FROM users "
-        "WHERE \"emailMessages\".recipient_id = users.user_id "
-        "AND users.user_name = $1; ",
-        user_name);
+        "WHERE recipient_id = $1 "
+        "AND is_received = FALSE"
+        , user_id);
 
     tx.commit();
-
-    return resutl_mails;
 }
 
 bool PgMailDB::UserExists(const std::string_view user_name)
