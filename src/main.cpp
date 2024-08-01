@@ -27,7 +27,9 @@ void fn(IMailDB& con)
     // ISXMailDB::PgMailDB mail("host4");
 
     // mail.Connect("postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require");
+}
 
-
+int main ()
+{
     return 0;
 }

@@ -4,7 +4,7 @@ INSERT INTO "mailBodies" (body_content) VALUES
 ('This is the body of the second email.'),
 ('This is the body of the third email.');
 
-INSERT INTO hosts (host_name) VALUES ('host1'), ('host2');
+INSERT INTO hosts (host_name) VALUES ('test host'), ('host1'), ('host2');
 
 INSERT INTO users (host_id, user_name, password_hash) VALUES 
 (1, 'user1', 'password_hash1'),

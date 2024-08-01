@@ -429,6 +429,21 @@ TEST_F(PgMailDBTest, CheckFunctionsAfterDisconnect)
 
 }
 
+TEST_F(PgMailDBTest, CheckUserExists)
+{
+  EXPECT_FALSE(pg.UserExists("user1"));
+  EXPECT_FALSE(pg.UserExists("user2"));
+
+  // pqxx::work tx(s_connection);
+  
+  // ASSERT_NO_FATAL_FAILURE(
+  //   ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
+  // );
+
+
+
+}
+
 
 
 int main(int argc, char **argv)
