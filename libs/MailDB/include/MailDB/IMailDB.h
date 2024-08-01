@@ -2,9 +2,6 @@
 
 #include <vector>
 #include <string>
-#include <memory>
-
-#include <pqxx/pqxx>
 
 namespace ISXMailDB
 {
@@ -53,7 +50,7 @@ public:
     IMailDB& operator=(IMailDB&&) = delete;
 
     // TODO: Viacheslav
-    virtual bool Connect(const std::string &connection_string) = 0;
+    virtual void Connect(const std::string &connection_string) = 0;
     virtual void Disconnect() = 0;
     virtual bool IsConnected() const = 0;
 
@@ -63,17 +60,20 @@ public:
 
     // TODO: Viacheslav
     virtual std::vector<User> RetrieveUserInfo(const std::string_view user_name = "") = 0;
-    virtual bool InsertEmailContent(const std::string_view content) = 0;
+    virtual void InsertEmailContent(const std::string_view content) = 0;
     virtual std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content = "") = 0;
-    virtual bool InsertEmail(const std::string_view sender, const std::string_view receiver,
+    virtual void InsertEmail(const std::string_view sender, const std::string_view receiver,
+                                const std::string_view subject, const std::string_view body) = 0;
+    virtual void InsertEmail(const std::string_view sender, std::vector<std::string_view> receivers,
                                 const std::string_view subject, const std::string_view body) = 0;
 
     // TODO: Denys
     virtual std::vector<Mail> RetrieveEmails(const std::string_view user_name, bool should_retrieve_all = false) const = 0;
+    virtual bool UserExists(const std::string_view user_name) = 0;
 
     // TODO: Viacheslav
-    virtual bool DeleteEmail(const std::string_view user_name) = 0;
-    virtual bool DeleteUser(const std::string_view user_name, const std::string_view hash_password) = 0;
+    virtual void DeleteEmail(const std::string_view user_name) = 0;
+    virtual void DeleteUser(const std::string_view user_name, const std::string_view hash_password) = 0;
 
 protected:
     virtual void InsertHost(const std::string_view host_name) = 0;
