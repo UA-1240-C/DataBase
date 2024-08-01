@@ -32,8 +32,15 @@
 + **std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content = "")** - same as **std::vector<User> RetrieveUserInfo(const std::string_view)**, but returns body content of email.
   + Exceptions thrown:
     + MailException("Connection with database lost or was manually already closed") - if connection with database was lost.
+   
++ **void MarkEmailsAsReceived(const std::string_view user_name)** - marks **all** emails as received for user with user_name.
+  + Exceptions thrown:
+    + MailException("User doesn't exist") - If user doesn't exist on host.                            
+
       
-+ **std::vector<Mail> RetrieveEmails(const std::string_view user_name, bool should_retrieve_all = false) const** - todo
++ **std::vector<Mail> RetrieveEmails(const std::string_view user_name, bool should_retrieve_all = false) const** - if should_retrieve_all = false return mails that haven't been received, otherwise return all emails for user with user_name. The order of mails in vector is the following: newer ones first.
+  + Exceptions thrown:
+    + MailException("User doesn't exist") - If user doesn't exist on host.
 
 + **bool InsertEmailContent(const std::string_view content)** - inserts given content in database.
   + Exceptions thrown:
@@ -73,7 +80,7 @@
 ```C++
 struct User
 {
-    User(const std::string& user_name, const std::string& user_password, const std::string& host_name) {}
+    User(const std::string& user_name, const std::string& user_password, const std::string& host_name);
 
     std::string user_name;
     std::string user_password;
@@ -82,7 +89,7 @@ struct User
 
 struct Mail
 {
-    Mail(std::string sender, std::string subject, std::string body) {}
+    Mail(std::string sender, std::string subject, std::string body);
 
     std::string sender;
     std::string subject;
