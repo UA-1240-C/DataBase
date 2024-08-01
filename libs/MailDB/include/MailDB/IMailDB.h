@@ -3,6 +3,8 @@
 #include <vector>
 #include <string>
 
+#include "MailException.h"
+
 namespace ISXMailDB
 {
 
