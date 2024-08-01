@@ -19,7 +19,7 @@
 
 + **void SignUp(const std::string_view user_name, const std::string_view hash_password)** - creates user with name and password on host, specified in constructor.
   + Exceptions thrown:
-    + MailException("User already exists") - if on host exists user with the same name.
+    + MailException("User already exists") - if user exists with the same name on host.
     
 + **void Login(const std::string_view user_name, const std::string_view hash_password)** - checks if passed credentials exist in database.
   + Exceptions thrown:
