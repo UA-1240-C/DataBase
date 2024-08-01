@@ -40,7 +40,7 @@ public:
     {
         if (host_name.empty())
         {
-            throw 1; // change
+            throw MailException("Host name couldn't be empty"); // change
         }
         m_host_name = host_name;
     }
