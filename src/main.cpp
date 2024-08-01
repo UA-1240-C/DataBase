@@ -7,7 +7,7 @@
 using namespace std;
 using namespace ISXMailDB;
 
-void fn(IMailDB& con)
+int main()
 {
     return 0;
 }

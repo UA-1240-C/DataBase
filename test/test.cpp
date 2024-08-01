@@ -434,14 +434,33 @@ TEST_F(PgMailDBTest, CheckUserExists)
   EXPECT_FALSE(pg.UserExists("user1"));
   EXPECT_FALSE(pg.UserExists("user2"));
 
-  // pqxx::work tx(s_connection);
+  pqxx::work tx(s_connection);
   
-  // ASSERT_NO_FATAL_FAILURE(
-  //   ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
-  // );
+  ASSERT_NO_FATAL_FAILURE(
+    ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
+  );
 
+  EXPECT_TRUE(pg.UserExists("user1"));
+  EXPECT_TRUE(pg.UserExists("user2"));
+  EXPECT_TRUE(pg.UserExists("user3"));
 
+  EXPECT_FALSE(pg.UserExists("user4"));
+}
 
+TEST_F(PgMailDBTest, CheckUserExistsWithSignUp)
+{
+  EXPECT_FALSE(pg.UserExists("user1"));
+  EXPECT_FALSE(pg.UserExists("user2"));
+
+  pg.SignUp("user1", "password");
+  pg.SignUp("user2", "password");
+  pg.SignUp("user3", "password");
+
+  EXPECT_TRUE(pg.UserExists("user1"));
+  EXPECT_TRUE(pg.UserExists("user2"));
+  EXPECT_TRUE(pg.UserExists("user3"));
+
+  EXPECT_FALSE(pg.UserExists("user4"));
 }
 
 
