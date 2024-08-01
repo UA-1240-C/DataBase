@@ -10,19 +10,5 @@ PgMailDB pg("host or server name");
 
 // use "postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require"
 // to connect to remote db
-if (pg.Connect(connection_string))
-{
-  // connection succeeded
-  try {
-    pg.SignUp("user_name", "hash_password");
-  }
-  catch(const MailException& e) {
-    cerr << e.what();
-  }
-}
-else
-{
-  // connection failed
-}
 
 ```
