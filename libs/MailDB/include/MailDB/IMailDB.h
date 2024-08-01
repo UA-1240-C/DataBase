@@ -71,6 +71,7 @@ public:
 
     // TODO: Denys
     virtual std::vector<Mail> RetrieveEmails(const std::string_view user_name, bool should_retrieve_all = false) const = 0;
+    virtual bool UserExists(const std::string_view user_name) = 0;
 
     // TODO: Viacheslav
     virtual bool DeleteEmail(const std::string_view user_name) = 0;

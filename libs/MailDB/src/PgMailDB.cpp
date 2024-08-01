@@ -363,6 +363,20 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
     return resutl_mails;
 }
 
+bool PgMailDB::UserExists(const std::string_view user_name)
+{
+    pqxx::nontransaction ntx(*m_conn);
+    try 
+    {
+        ntx.exec_params1("SELECT 1 FROM users WHERE host_id = $1 AND user_name = $2", m_host_id, user_name);
+        return true;
+    }
+    catch(pqxx::unexpected_rows &e)
+    {
+        return false;
+    }
+}
+
 bool PgMailDB::DeleteEmail(const std::string_view user_name)
 {
     try
