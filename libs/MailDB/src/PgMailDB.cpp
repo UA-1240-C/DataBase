@@ -323,7 +323,7 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
 
     std::string query =
         "WITH filtered_emails AS ( "
-        "    SELECT sender_id, subject, mail_body_id "
+        "    SELECT sender_id, subject, mail_body_id, sent_at "
         "    FROM \"emailMessages\" "
         "    WHERE recipient_id = " +
         ntx.quote(user_id) + additional_condition +
