@@ -46,7 +46,7 @@ public:
     }
     virtual ~IMailDB() = default;
 
-    IMailDB(const IMailDB&) = delete;
+    IMailDB(const IMailDB&);
     IMailDB& operator=(const IMailDB&) = delete;
 
     IMailDB(IMailDB&&) = delete;

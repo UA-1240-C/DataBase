@@ -10,6 +10,10 @@ PgMailDB::PgMailDB(std::string_view host_name)
 {
 }
 
+PgMailDB::PgMailDB(const PgMailDB& other) : IMailDB(other.m_host_name)
+{
+}
+
 PgMailDB::~PgMailDB()
 {   
     Disconnect();

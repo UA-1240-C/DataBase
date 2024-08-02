@@ -13,6 +13,8 @@ class PgMailDB : public IMailDB
 
 public:
     PgMailDB(std::string_view host_name);
+    PgMailDB(const PgMailDB&);
+
     virtual ~PgMailDB();
 
     // TODO: Viacheslav
