@@ -107,9 +107,10 @@ std::string PgMailDB::GetPasswordHash(const std::string_view user_name)
     pqxx::nontransaction ntx(*m_conn);
     try
     {
-        m_host_id = ntx.query_value<uint32_t>("SELECT password_hash FROM users "
+        std::string password_hash = ntx.query_value<std::string>("SELECT password_hash FROM users "
         "WHERE user_name = " + ntx.quote(user_name) 
         +  "AND host_id = " + ntx.quote(m_host_id));
+        return password_hash;
     }
     catch(const pqxx::unexpected_rows &e)
     {
