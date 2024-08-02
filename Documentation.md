@@ -5,6 +5,10 @@
 + **IMailDB(const std::string_view host_name)** - set m_host_name to host_name.
   + Exceptions thrown:
     + MailException("Host name couldn't be empty") - if host_name is empty.
+   
++ **IMailDB(const IMailDB& other)** - set m_host_name to other.m_host_name.
+  + Exceptions thrown:
+    + MailException("Host name couldn't be empty") - if other.m_host_name is empty.
 
 + **bool Connect(const std::string &connection_string)** - establish connection between client and database server.
   + Pass connection_string of one of the following format:
