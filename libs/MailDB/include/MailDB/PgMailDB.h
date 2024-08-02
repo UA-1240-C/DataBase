@@ -25,6 +25,8 @@ public:
     // TODO: Denys
     virtual void SignUp(const std::string_view user_name, const std::string_view hash_password) override;
     virtual void Login(const std::string_view user_name, const std::string_view hash_password) override;
+    virtual std::string GetPasswordHash(const std::string_view user_name) override;
+
 
     // TODO: Viacheslav
     virtual std::vector<User> RetrieveUserInfo(const std::string_view user_name = "") override;
