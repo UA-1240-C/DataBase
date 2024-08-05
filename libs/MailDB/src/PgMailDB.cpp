@@ -470,7 +470,8 @@ uint32_t PgMailDB::RetriveUserId(const std::string_view user_name, pqxx::transac
 {
     try
     {
-        return ntx.query_value<uint32_t>("SELECT user_id FROM users WHERE user_name = " + ntx.quote(user_name) + "  AND host_id = 1");
+        return ntx.query_value<uint32_t>("SELECT user_id FROM users WHERE user_name = " + ntx.quote(user_name) 
+                                         + "  AND host_id = " + ntx.quote(m_host_id));
     }
     catch (pqxx::unexpected_rows &e)
     {
