@@ -21,6 +21,8 @@
 
 + **bool IsConnected()** const - return true, if connection established and exists, otherwise false. 
 
++ **std::string GetPasswordHash(const std::string_view user_name)** - return hash password for user with specified user_name. If user doesn't exist return empty string.
+  
 + **void SignUp(const std::string_view user_name, const std::string_view hash_password)** - creates user with name and password on host, specified in constructor.
   + Exceptions thrown:
     + MailException("User already exists") - if user exists with the same name on host.
