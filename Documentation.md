@@ -42,16 +42,10 @@
 + **void MarkEmailsAsReceived(const std::string_view user_name)** - marks **all** emails as received for user with user_name.
   + Exceptions thrown:
     + MailException("User doesn't exist") - If user doesn't exist on host.                            
-
       
 + **std::vector<Mail> RetrieveEmails(const std::string_view user_name, bool should_retrieve_all = false) const** - if should_retrieve_all = false return mails that haven't been received, otherwise return all emails for user with user_name. The order of mails in vector is the following: newer ones first.
   + Exceptions thrown:
     + MailException("User doesn't exist") - If user doesn't exist on host.
-
-+ **bool InsertEmailContent(const std::string_view content)** - inserts given content in database.
-  + Exceptions thrown:
-    + MailException(appropriate pqxx error message) - if transaction failed; 
-    + MailException("Connection with database lost or was manually already closed") - if connection with database was lost.
   
 + **bool InsertEmail(const std::string_view sender, const std::string_view receiver,
                             const std::string_view subject, const std::string_view body)** - inserts email with single receiver passed. Also implicitly insert mail content into database.
@@ -82,7 +76,7 @@
     + MailException("Given value doesn't exist in database.") - if passed user doesn't exist;
     + MailException("Connection with database lost or was manually already closed") - if connection with database was lost.
 
-## Helper sturcts
+## Helper structs
 ```C++
 struct User
 {
