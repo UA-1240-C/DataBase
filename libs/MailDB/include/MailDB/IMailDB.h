@@ -64,11 +64,10 @@ public:
 
     // TODO: Viacheslav
     virtual std::vector<User> RetrieveUserInfo(const std::string_view user_name = "") = 0;
-    virtual void InsertEmailContent(const std::string_view content) = 0;
     virtual std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content = "") = 0;
     virtual void InsertEmail(const std::string_view sender, const std::string_view receiver,
                                 const std::string_view subject, const std::string_view body) = 0;
-    virtual void InsertEmail(const std::string_view sender, std::vector<std::string_view> receivers,
+    virtual void InsertEmail(const std::string_view sender, const std::vector<std::string_view> receivers,
                                 const std::string_view subject, const std::string_view body) = 0;
 
     // TODO: Denys
