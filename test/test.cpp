@@ -238,7 +238,8 @@ bool operator==(const std::vector<Mail>& lhs, const std::vector<Mail>& rhs)
   {
     if(lhs[i].sender != rhs[i].sender 
       || lhs[i].subject != rhs[i].subject 
-      || lhs[i].body != rhs[i].body)
+      || lhs[i].body != rhs[i].body
+      || lhs[i].recipient != rhs[i].recipient)
       return false;
   }
   return true;
@@ -448,8 +449,8 @@ TEST_F(PgMailDBTest, RetrieveEmailsTest)
 
   EXPECT_THROW(pg.RetrieveEmails("non-existent user"), MailException);
 
-  std::vector<Mail> expected_result = {{"user2", "Subject 2", "This is the body of the second email."}, 
-  {"user3", "Subject 3", "This is the body of the third email."}};
+  std::vector<Mail> expected_result = {{"user1", "user2", "Subject 2", "This is the body of the second email."}, 
+  {"user1", "user3", "Subject 3", "This is the body of the third email."}};
 
   std::vector<Mail> result = pg.RetrieveEmails("user1");
 

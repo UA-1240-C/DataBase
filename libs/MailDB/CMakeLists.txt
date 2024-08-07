@@ -20,6 +20,7 @@ set(LIBRARY_SOURCE_DIR
 )
 set(LIBRARY_SOURCE
     ${LIBRARY_SOURCE_DIR}/PgMailDB.cpp
+    ${LIBRARY_SOURCE_DIR}/IMailDB.cpp
 )
 
 project(${PROJECT_NAME})
