@@ -19,6 +19,7 @@ PgMailDB::~PgMailDB()
     Disconnect();
 }
 
+
 void PgMailDB::Connect(const std::string& connection_string)
 {
     try {
@@ -302,6 +303,7 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
         "LEFT JOIN users AS u ON u.user_id = f.sender_id "
         "LEFT JOIN \"mailBodies\" AS m ON m.mail_body_id = f.mail_body_id "
         "ORDER BY f.sent_at DESC; ";
+
 
 
     std::vector<Mail> resutl_mails;
