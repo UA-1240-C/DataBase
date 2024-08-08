@@ -1,45 +1,24 @@
-CREATE TABLE hosts (
-    host_id SERIAL PRIMARY KEY,
-    host_name VARCHAR(100) UNIQUE NOT NULL
-);
+# How to install
+1. Copy libs/MailDB to your project libs folder
+2. You may need to download PostgreSQL https://www.postgresql.org/download/
+3. Don't forget to add library to your CMakeLists.txt
+# How to use
+Use PgMailDB class to establish connection with database. PgMailDB inherits from interface IMailDB. Some methods can throw an error (see https://github.com/UA-1240-C/DataBase/blob/main/Documentation.md).  It may be necessary to wrap all your code after the Connection() method in try catch block in order to catch Internet connection loss. For multithreading, you need to use in each thread own instance of PgMailDB.
+# Example
+```C++
+PgMailDB pg("host or server name");
 
-CREATE TABLE users (
-    user_id SERIAL PRIMARY KEY,
-	host_id INTEGER REFERENCES hosts(host_id),
-    user_name VARCHAR(100) NOT NULL,
-    password_hash TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+try
+{
+  // use "postgresql://postgres.qotrdwfvknwbfrompcji:yUf73LWenSqd9Lt4@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require"
+  // to connect to remote db
+  pg.Connect(connection_string);
+}
+catch (const MailException& e)
+{
+  cerr << "connection failed\n";
+}
 
-CREATE TABLE mailBodies (
-    mail_body_id SERIAL PRIMARY KEY,
-    body_content TEXT NOT NULL
-);
-
-CREATE TABLE emailMessages (
-    email_message_id SERIAL PRIMARY KEY,
-    sender_id INTEGER REFERENCES users(user_id),
-    recipient_id INTEGER REFERENCES users(user_id),
-    subject VARCHAR(255),
-	mail_body_id INTEGER REFERENCES mailBodies(mail_body_id),
-    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_received BOOLEAN DEFAULT FALSE
-);
-
---Insert dummy data
-INSERT INTO mailBodies (body_content) VALUES
-('This is the body of the first email.'),
-('This is the body of the second email.'),
-('This is the body of the third email.');
-
-INSERT INTO hosts (host_name) VALUES ('host1'), ('host2');
-
-INSERT INTO users (host_id, user_name, password_hash) VALUES 
-(1, 'user1', 'password_hash1'),
-(1, 'user2', 'password_hash2'),
-(1, 'user3', 'password_hash3');
-
-INSERT INTO emailMessages (sender_id, recipient_id, subject, mail_body_id, is_received) VALUES
-(1, 2, 'Subject 1', 1, TRUE),
-(2, 1, 'Subject 2', 2, FALSE),
-(3, 1, 'Subject 3', 3, TRUE);
+```
+# Database
+ER diagram https://lucid.app/lucidchart/95544ac2-f894-4635-9e8f-5bbcb3618d7f/edit?view_items=4xwLouG-UXPv&invitationId=inv_6d37cbf3-607e-45b2-84d3-daaf9d50173c
