@@ -1,4 +1,3 @@
-#include <iostream>
 #include <memory>
 
 #include "MailException.h"
@@ -11,39 +10,32 @@ PgMailDB::PgMailDB(std::string_view host_name)
 {
 }
 
+PgMailDB::PgMailDB(const PgMailDB& other) : IMailDB(other.m_host_name)
+{
+}
+
 PgMailDB::~PgMailDB()
 {   
     Disconnect();
 }
 
-bool PgMailDB::Connect(const std::string& connection_string)
-    {
-        try {
-            m_conn = std::make_unique<pqxx::connection>(connection_string);
-            InsertHost(m_host_name);
-        }
-        catch (const std::exception &e) {
-            std::cerr << e.what() << std::endl;
-            return false;
-        }
 
-        return true;
-
+void PgMailDB::Connect(const std::string& connection_string)
+{
+    try {
+        m_conn = std::make_unique<pqxx::connection>(connection_string);
+        InsertHost(m_host_name);
     }
+    catch (const std::exception &e) {
+        throw MailException(e.what());
+    }
+}
 
 void PgMailDB::Disconnect()
 {
-    try
+    if (IsConnected())
     {
-        if (!IsConnected())
-        {
-            throw pqxx::broken_connection();
-        }
         m_conn->close();
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << e.what() << std::endl;
     }
 }
 
@@ -57,7 +49,7 @@ bool PgMailDB::IsConnected() const
     return false;
 }
 
-bool PgMailDB::SignUp(const std::string_view user_name, const std::string_view hash_password)
+void PgMailDB::SignUp(const std::string_view user_name, const std::string_view hash_password)
 {
     pqxx::work tx(*m_conn);
 
@@ -75,8 +67,6 @@ bool PgMailDB::SignUp(const std::string_view user_name, const std::string_view h
         throw MailException("User already exists");
     }
     tx.commit();
-
-    return true;
 }
 
 void PgMailDB::InsertHost(const std::string_view host_name)
@@ -86,7 +76,7 @@ void PgMailDB::InsertHost(const std::string_view host_name)
     {
         m_host_id = tx.query_value<uint32_t>("SELECT host_id FROM hosts WHERE host_name = " + tx.quote(m_host_name));
     }
-    catch (std::exception &e)
+    catch (pqxx::unexpected_rows& e)
     {
         pqxx::result host_id_result = tx.exec_params(
             "INSERT INTO hosts (host_name) VALUES ( $1 ) RETURNING host_id", m_host_name);
@@ -96,7 +86,7 @@ void PgMailDB::InsertHost(const std::string_view host_name)
     tx.commit();
 }
 
-bool PgMailDB::Login(const std::string_view user_name, const std::string_view hash_password)
+void PgMailDB::Login(const std::string_view user_name, const std::string_view hash_password)
 {
     pqxx::nontransaction ntx(*m_conn);
 
@@ -107,57 +97,56 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
             "WHERE host_id = $1 AND user_name = $2 AND password_hash = $3",
             m_host_id, user_name, hash_password);
     }
-    catch (pqxx::unexpected_rows &e)
+    catch (const pqxx::unexpected_rows &e)
     {
-        //throw MailException("Invalid user name or password");
-        return false;
+        throw MailException("Invalid user name or password");
     }
-
-    return true;
 }
 
- std::vector<User> PgMailDB::RetrieveUserInfo(const std::string_view user_name)
+std::string PgMailDB::GetPasswordHash(const std::string_view user_name)
+{
+    pqxx::nontransaction ntx(*m_conn);
+    try
     {
-        try 
-        {
-            if (!IsConnected())
-            {
-                throw pqxx::broken_connection();
-            }
-        }
-        catch (const std::exception& e)
-        {
-            std::cerr << e.what() << std::endl;
-            return std::vector<User>();
-        }
+        std::string password_hash = ntx.query_value<std::string>("SELECT password_hash FROM users "
+        "WHERE user_name = " + ntx.quote(user_name) 
+        +  "AND host_id = " + ntx.quote(m_host_id));
+        return password_hash;
+    }
+    catch(const pqxx::unexpected_rows &e)
+    {
+        return {};
+    }
+    
+}
 
+std::vector<User> PgMailDB::RetrieveUserInfo(const std::string_view user_name)
+    {
+        if (!IsConnected())
+        {
+            throw MailException("Connection with database lost or was manually already closed");
+        }
 
         pqxx::nontransaction nontransaction(*m_conn);
         pqxx::result user_query_result;
-        try {
-            if (user_name.empty())
-            {
-                user_query_result = nontransaction.exec_params(
-                    "SELECT u.user_name, u.password_hash, h.host_name FROM public.\"users\" u "
-                    "LEFT JOIN public.\"hosts\" h ON u.host_id = h.host_id"
-                );
-            }
-            else
-            {
-                user_query_result = nontransaction.exec_params(
-                    "SELECT u.user_name, u.password_hash, h.host_name FROM public.\"users\" u "
-                    "LEFT JOIN public.\"hosts\" h ON u.host_id = h.host_id "
-                    "WHERE u.user_name = $1"
-                    , nontransaction.esc(user_name)
-                );
-            }
-        }
-        catch (const std::exception& e)
+    
+        if (user_name.empty())
         {
-            std::cerr << "Transaction failed: " << e.what() << std::endl;
-            return std::vector<User>();
+            user_query_result = nontransaction.exec_params(
+                "SELECT u.user_name, u.password_hash, h.host_name FROM users u "
+                "LEFT JOIN hosts h ON u.host_id = h.host_id"
+            );
         }
-
+        else
+        {
+            user_query_result = nontransaction.exec_params(
+                "SELECT u.user_name, u.password_hash, h.host_name FROM users u "
+                "LEFT JOIN hosts h ON u.host_id = h.host_id "
+                "WHERE u.user_name = $1"
+                , nontransaction.esc(user_name)
+            );
+        }
+        
         std::vector<User> info;
         if (!user_query_result.empty())
         {
@@ -174,83 +163,29 @@ bool PgMailDB::Login(const std::string_view user_name, const std::string_view ha
         return std::vector<User>();
     }
 
-bool PgMailDB::InsertEmailContent(const std::string_view content)
-{
-    try
-    {
-        if (!IsConnected())
-        {
-            throw pqxx::broken_connection();
-        }
-    }
-    catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return false;
-    }
-
-    try {
-        pqxx::work transaction(*m_conn);
-        try 
-        {
-            uint32_t content_id = transaction.query_value<uint32_t>(
-                "SELECT mail_body_id FROM public.\"mailBodies\" WHERE body_content = " + transaction.quote(content)
-            );
-        }
-        catch (const std::exception& e) 
-        {
-            transaction.exec_params(
-                "INSERT INTO public.\"mailBodies\" (body_content)VALUES($1) "
-                "ON CONFLICT(body_content) DO NOTHING "
-                , content
-            );
-        }
-        transaction.commit();
-
-    }
-    catch (const std::exception& e) {
-        std::cerr << "Transaction failed: " << e.what() << std::endl;
-        return false;
-    }
-
-    return true;
-}
-
 std::vector<std::string> PgMailDB::RetrieveEmailContentInfo(const std::string_view content)
 {
-    try
+    if (!IsConnected())
     {
-        if (!IsConnected())
-        {
-            throw pqxx::broken_connection();
-        }
-    }
-    catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return std::vector<std::string>();
+        throw MailException("Connection with database lost or was manually already closed");
     }
 
     pqxx::nontransaction nontransaction(*m_conn);
     pqxx::result content_query_result;
-    try {
-        if (content.empty())
-        {
-            content_query_result = nontransaction.exec_params(
-                "SELECT body_content FROM public.\"mailBodies\""
-            );
-        }
-        else
-        {
-            content_query_result = nontransaction.exec_params(
-                "SELECT body_content FROM public.\"mailBodies\" "
-                "WHERE body_content = $1"
-                , nontransaction.esc(content)
-            );
-        }
-    }
-    catch (const std::exception& e)
+   
+    if (content.empty())
     {
-        std::cerr << "Transaction failed: " << e.what() << std::endl;
-        return std::vector<std::string>();
+        content_query_result = nontransaction.exec_params(
+            "SELECT body_content FROM \"mailBodies\""
+        );
+    }
+    else
+    {
+        content_query_result = nontransaction.exec_params(
+            "SELECT body_content FROM \"mailBodies\" "
+            "WHERE body_content = $1"
+            , nontransaction.esc(content)
+        );
     }
 
     std::vector<std::string> info{};
@@ -267,68 +202,88 @@ std::vector<std::string> PgMailDB::RetrieveEmailContentInfo(const std::string_vi
     return std::vector<std::string>();
 }
 
-bool PgMailDB::InsertEmail(const std::string_view sender, const std::string_view receiver,
+void PgMailDB::InsertEmail(const std::string_view sender, const std::string_view receiver,
                                 const std::string_view subject, const std::string_view body)
 {
-    try
+    if (!IsConnected())
     {
-        if (!IsConnected())
-        {
-            throw pqxx::broken_connection();
-        }
-    }
-    catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return false;
+        throw MailException("Connection with database lost or was manually already closed");
     }
 
-    InsertEmailContent(body);
 
     uint32_t sender_id, receiver_id, body_id;
     {
-        pqxx::nontransaction nontransaction(*m_conn);
-        try {
-            sender_id = nontransaction.query_value<uint32_t>(
-                "SELECT user_id FROM public.\"users\" WHERE user_name = " + nontransaction.quote(sender)
-            );
-            receiver_id = nontransaction.query_value<uint32_t>(
-                "SELECT user_id FROM public.\"users\" WHERE user_name = " + nontransaction.quote(receiver)
-            );
-            body_id = nontransaction.query_value<uint32_t>(
-                "SELECT mail_body_id FROM public.\"mailBodies\" WHERE body_content = " + nontransaction.quote(body)
-            );
-        }
-        catch(const pqxx::unexpected_rows& e)
+        try
         {
-            std::cout << "Given value doesn't exist in database. Aborting operation.\n";
-            return false;
+            {
+                pqxx::nontransaction nontransaction(*m_conn);
+                sender_id = RetriveUserId(sender, nontransaction);
+                receiver_id = RetriveUserId(receiver, nontransaction);
+                body_id = InsertEmailContent(body, nontransaction);
+            }
+        }
+        catch (const std::exception& e)
+        {
+            throw MailException("Given value doesn't exist in database.");
         }
     }
     
     try {
         pqxx::work transaction(*m_conn);
-        transaction.exec_params(
-            "INSERT INTO public.\"emailMessages\" (sender_id, recipient_id, subject, mail_body_id, is_received) "
-            "VALUES ($1, $2, $3, $4, false) "
-            , sender_id, receiver_id,
-            subject, body_id
-        );
+        PerformEmailInsertion(sender_id, receiver_id, subject, body_id, transaction);
         transaction.commit();
     }
     catch (const std::exception& e) {
-        std::cerr << "Transaction failed: " << e.what() << std::endl;
-        return false;
+        throw MailException(e.what());
+    }
+}
+
+void PgMailDB::InsertEmail(const std::string_view sender, const std::vector<std::string_view> receivers, const std::string_view subject, const std::string_view body)
+{
+    if (!IsConnected())
+    {
+        throw MailException("Connection with database lost or was manually already closed");
     }
 
-    return true;
+    uint32_t sender_id, body_id;
+    std::vector<uint32_t> receivers_id;
+    {
+        try
+        {
+            {
+                pqxx::nontransaction nontransaction(*m_conn);
+                sender_id = RetriveUserId(sender, nontransaction);
+
+                for (size_t i = 0; i < receivers.size(); i++) {
+                    receivers_id.push_back(RetriveUserId(receivers[i], nontransaction));
+                }
+                
+                body_id = InsertEmailContent(body, nontransaction);
+            }
+        }
+        catch (const std::exception& e)
+        {
+            throw MailException("Given value doesn't exist in database.");
+        }
+    }
+
+    try {
+        pqxx::work transaction(*m_conn);
+        for (size_t i = 0; i < receivers_id.size(); i++) {
+            PerformEmailInsertion(sender_id, receivers_id[i], subject, body_id, transaction);
+        }
+        transaction.commit();
+    }
+    catch (const std::exception& e) {
+        throw MailException(e.what());
+    }
 }
 
 std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, bool should_retrieve_all) const
 {
-    pqxx::work tx(*m_conn);
+    pqxx::nontransaction ntx(*m_conn);
 
-    // add check if user exist with current host
-    uint32_t user_id = RetriveUserId(user_name, tx);
+    uint32_t user_id = RetriveUserId(user_name, ntx);
 
     std::string additional_condition = "";
     if (!should_retrieve_all)
@@ -338,62 +293,76 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
 
     std::string query =
         "WITH filtered_emails AS ( "
-        "    SELECT sender_id, subject, mail_body_id "
-        "    FROM emailMessages "
+        "    SELECT sender_id, subject, mail_body_id, sent_at "
+        "    FROM \"emailMessages\" "
         "    WHERE recipient_id = " +
-        tx.quote(user_id) + additional_condition +
+        ntx.quote(user_id) + additional_condition +
         ")"
         "SELECT u.user_name AS sender_name, f.subject, m.body_content "
         "FROM filtered_emails AS f "
         "LEFT JOIN users AS u ON u.user_id = f.sender_id "
-        "LEFT JOIN mailBodies AS m ON m.mail_body_id = f.mail_body_id; ";
+        "LEFT JOIN \"mailBodies\" AS m ON m.mail_body_id = f.mail_body_id "
+        "ORDER BY f.sent_at DESC; ";
+
+
 
     std::vector<Mail> resutl_mails;
 
-    for (auto [sender, subject, body] : tx.query<std::string, std::string, std::string>(query))
+    for (auto [sender, subject, body] : ntx.query<std::string, std::string, std::string>(query))
     {
-        resutl_mails.emplace_back(sender, subject, body);
+        resutl_mails.emplace_back(user_name,sender, subject, body);
     }
-
-    tx.exec_params(
-        "UPDATE emailMessages "
-        "SET is_received = TRUE "
-        "FROM users "
-        "WHERE emailMessages.recipient_id = users.user_id "
-        "AND users.user_name = $1; ",
-        user_name);
-
-    tx.commit();
 
     return resutl_mails;
 }
 
-bool PgMailDB::DeleteEmail(const std::string_view user_name)
+void PgMailDB::MarkEmailsAsReceived(const std::string_view user_name)
 {
-    try
+
+    pqxx::work tx(*m_conn);
+
+    uint32_t user_id = RetriveUserId(user_name, tx);
+
+    tx.exec_params(
+        "UPDATE \"emailMessages\" "
+        "SET is_received = TRUE "
+        "WHERE recipient_id = $1 "
+        "AND is_received = FALSE"
+        , user_id);
+
+    tx.commit();
+}
+
+bool PgMailDB::UserExists(const std::string_view user_name)
+{
+    pqxx::nontransaction ntx(*m_conn);
+    try 
     {
-        if (!IsConnected())
-        {
-            throw pqxx::broken_connection();
-        }
+        ntx.exec_params1("SELECT 1 FROM users WHERE host_id = $1 AND user_name = $2", m_host_id, user_name);
+        return true;
     }
-    catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    catch(pqxx::unexpected_rows &e)
+    {
         return false;
+    }
+}
+
+void PgMailDB::DeleteEmail(const std::string_view user_name)
+{
+    if (!IsConnected())
+    {
+        throw MailException("Connection with database lost or was manually already closed");
     }
 
     uint32_t user_info;
     {
-        pqxx::nontransaction nontransaction(*m_conn);
         try {
-            user_info = nontransaction.query_value<uint32_t>(
-                "SELECT user_id FROM public.\"users\" WHERE user_name = " + nontransaction.quote(user_name)
-            );
+            pqxx::nontransaction nontransaction(*m_conn);
+            user_info = RetriveUserId(user_name, nontransaction);
         }
-        catch (const pqxx::unexpected_rows& e)
+        catch (const std::exception& e)
         {
-            std::cout << "Given value doesn't exist in database. Aborting operation.\n";
-            return false;
+            throw MailException("Given value doesn't exist in database.");
         }
     }
 
@@ -401,7 +370,7 @@ bool PgMailDB::DeleteEmail(const std::string_view user_name)
     {
         pqxx::work transaction(*m_conn);
         transaction.exec_params(
-            "DELETE FROM public.\"emailMessages\" "
+            "DELETE FROM \"emailMessages\" "
             "WHERE sender_id = $1 OR recipient_id = $1"
             , user_info
         );
@@ -409,60 +378,90 @@ bool PgMailDB::DeleteEmail(const std::string_view user_name)
     }
     catch(const std::exception& e)
     {
-        std::cerr << "Transaction failed: " << e.what() << std::endl;
-        return false;
+        throw MailException(e.what());
     }
-
-    return true;
 }
 
-bool PgMailDB::DeleteUser(const std::string_view user_name, const std::string_view hash_password)
+void PgMailDB::DeleteUser(const std::string_view user_name, const std::string_view hash_password)
 {
-    try
+    if (!IsConnected())
     {
-        if (!IsConnected())
-        {
-            throw pqxx::broken_connection();
-        }
+        throw MailException("Connection with database lost or was manually already closed");
     }
-    catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return false;
-    }
-
-    if (!DeleteEmail(user_name))
+    
+    try 
     {
-        return false;
+        Login(user_name, hash_password);
+        DeleteEmail(user_name);
+    }
+    catch (const MailException& e) {
+        throw MailException(e.what());
     }
 
     try
     {
         pqxx::work transaction(*m_conn);
         transaction.exec_params(
-            "DELETE FROM public.\"users\" "
-            "WHERE user_name = $1 AND password = $2"
-            , transaction.esc(user_name), transaction.esc(hash_password)
+            "DELETE FROM users "
+            "WHERE user_name = $1 AND password_hash = $2 AND host_id = $3"
+            , transaction.esc(user_name), transaction.esc(hash_password), m_host_id
         );
         transaction.commit();
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Transaction failed: " << e.what() << std::endl;
-        return false;
+        throw MailException(e.what());
+    }
+} 
+
+uint32_t PgMailDB::InsertEmailContent(const std::string_view content, pqxx::transaction_base& transaction)
+{
+    if (!IsConnected())
+    {
+        throw MailException("Connection with database lost or was manually already closed");
     }
 
-    return true;
-} 
+    pqxx::result body_id;
+    try {
+        body_id = transaction.exec_params(
+            "INSERT INTO \"mailBodies\" (body_content)VALUES($1) RETURNING mail_body_id"
+            , content
+        );
+        transaction.commit();
+    }
+    catch (const std::exception& e) {
+        throw MailException(e.what());
+    }
+
+    return body_id[0].at("mail_body_id").as<uint32_t>();
+}
 
 uint32_t PgMailDB::RetriveUserId(const std::string_view user_name, pqxx::transaction_base &ntx) const
 {
     try
     {
-        return ntx.query_value<uint32_t>("SELECT user_id FROM users WHERE user_name = " + ntx.quote(user_name) + "  AND host_id = 1");
+        return ntx.query_value<uint32_t>("SELECT user_id FROM users WHERE user_name = " + ntx.quote(user_name) 
+                                         + "  AND host_id = " + ntx.quote(m_host_id));
     }
     catch (pqxx::unexpected_rows &e)
     {
         throw MailException("User doesn't exist");
     };
 }  
+
+void PgMailDB::PerformEmailInsertion(const uint32_t sender_id, const uint32_t receiver_id,
+                                const std::string_view subject, const uint32_t body_id, pqxx::transaction_base& transaction)
+{
+    try {
+        transaction.exec_params(
+            "INSERT INTO \"emailMessages\" (sender_id, recipient_id, subject, mail_body_id, is_received) "
+            "VALUES ($1, $2, $3, $4, false) "
+            , sender_id, receiver_id,
+            subject, body_id
+        );
+    }
+    catch (const std::exception& e) {
+        throw MailException(e.what());
+    }
+}
 }
