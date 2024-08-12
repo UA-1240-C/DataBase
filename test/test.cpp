@@ -9,9 +9,8 @@
 #include "MailDB/PgMailDB.h"
 #include "MailDB/MailException.h"
 
-
 const char*  CONNECTION_STRING1 = "dbname=testmaildb user=postgres password=password hostaddr=127.0.0.1 port=5432";
-const char*  CONNECTION_STRING1 = "dbname=<> user=postgres password=<> hostaddr=127.0.0.1 port=5432";
+const char*  CONNECTION_STRING2 = "dbname=testmaildb2 user=postgres password=password hostaddr=127.0.0.1 port=5432";
 
 using namespace ISXMailDB;
 
@@ -34,7 +33,7 @@ class DatabaseFixture : public testing::Test
 
     virtual void TearDown() override
     {
-        pqxx::connection conn(CONNECTION_STRING1);
+        pqxx::connection conn(CONNECTION_STRING2);
         pqxx::work transaction(conn);
         transaction.exec(
             "TRUNCATE \"emailMessages\", \"mailBodies\", users RESTART IDENTITY"
@@ -45,7 +44,7 @@ class DatabaseFixture : public testing::Test
     static void SetUpTestCase()
     {
       m_database = std::make_unique<ISXMailDB::PgMailDB>("host");
-      m_database->Connect(CONNECTION_STRING1);
+      m_database->Connect(CONNECTION_STRING2);
     }
 
     static void TearDownTestCase()
@@ -60,7 +59,7 @@ class DatabaseFixture : public testing::Test
 TEST(ConnectionTestSuite, Connect_To_Local_Test)
 {
     ISXMailDB::PgMailDB database("host");
-    EXPECT_NO_THROW(database.Connect(CONNECTION_STRING1));
+    EXPECT_NO_THROW(database.Connect(CONNECTION_STRING2));
 
     database.Disconnect();
 }
@@ -492,6 +491,27 @@ TEST_F(PgMailDBTest, CheckUserExistsWithSignUp)
   EXPECT_FALSE(pg.UserExists("user4"));
 }
 
+TEST_F(PgMailDBTest, CheckMultipleHosts)
+{
+  pg.SignUp("user1", "password");
+  pg.SignUp("user2", "password");
+  EXPECT_TRUE(pg.UserExists("user1"));
+
+  PgMailDB pg1("host1"), pg2("host2");
+
+  EXPECT_FALSE(pg1.UserExists("user1"));
+  EXPECT_FALSE(pg2.UserExists("user1"));
+
+  pg1.SignUp("user1", "password");
+  pg2.SignUp("user1", "password");
+
+  EXPECT_TRUE(pg1.UserExists("user1"));
+  EXPECT_TRUE(pg2.UserExists("user1"));
+
+  EXPECT_FALSE(pg1.UserExists("user2"));
+  EXPECT_FALSE(pg2.UserExists("user2"));
+
+}
 
 
 int main(int argc, char **argv)
