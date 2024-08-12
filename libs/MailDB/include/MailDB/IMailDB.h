@@ -59,17 +59,12 @@ public:
     IMailDB(IMailDB&&) = delete;
     IMailDB& operator=(IMailDB&&) = delete;
 
-    // TODO: Viacheslav
     virtual void Connect(const std::string &connection_string) = 0;
     virtual void Disconnect() = 0;
     virtual bool IsConnected() const = 0;
 
-    // TODO: Denys
-    virtual void SignUp(const std::string_view user_name, const std::string_view hash_password) = 0;
     virtual void Login(const std::string_view user_name, const std::string_view hash_password) = 0;
-    virtual std::string GetPasswordHash(const std::string_view user_name) = 0;
 
-    // TODO: Viacheslav
     virtual std::vector<User> RetrieveUserInfo(const std::string_view user_name = "") = 0;
     virtual std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content = "") = 0;
     virtual void InsertEmail(const std::string_view sender, const std::string_view receiver,
@@ -77,12 +72,6 @@ public:
     virtual void InsertEmail(const std::string_view sender, const std::vector<std::string_view> receivers,
                                 const std::string_view subject, const std::string_view body) = 0;
 
-    // TODO: Denys
-    virtual std::vector<Mail> RetrieveEmails(const std::string_view user_name, bool should_retrieve_all = false) const = 0;
-    virtual void MarkEmailsAsReceived(const std::string_view user_name) = 0;
-    virtual bool UserExists(const std::string_view user_name) = 0;
-
-    // TODO: Viacheslav
     virtual void DeleteEmail(const std::string_view user_name) = 0;
     virtual void DeleteUser(const std::string_view user_name, const std::string_view hash_password) = 0;
 
