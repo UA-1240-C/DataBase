@@ -11,8 +11,8 @@ namespace ISXMailDB
 
 struct User
 {
-    User(const std::string& user_name, const std::string& user_password, const std::string& host_name)
-        : user_name{user_name}, user_password{user_password}, host_name{host_name}
+    User(std::string user_name, std::string user_password, std::string host_name)
+        : user_name{std::move(user_name)}, user_password{std::move(user_password)}, host_name{std::move(host_name)}
     {
     }
 
@@ -65,8 +65,8 @@ public:
 
     virtual void Login(const std::string_view user_name, const std::string_view hash_password) = 0;
 
-    virtual std::vector<User> RetrieveUserInfo(const std::string_view user_name = "") = 0;
-    virtual std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content = "") = 0;
+    virtual std::vector<User> RetrieveUserInfo(const std::string_view user_name) = 0;
+    virtual std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content ) = 0;
     virtual void InsertEmail(const std::string_view sender, const std::string_view receiver,
                                 const std::string_view subject, const std::string_view body) = 0;
     virtual void InsertEmail(const std::string_view sender, const std::vector<std::string_view> receivers,
