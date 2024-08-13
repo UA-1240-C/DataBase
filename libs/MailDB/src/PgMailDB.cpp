@@ -285,24 +285,20 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
 
     uint32_t user_id = RetriveUserId(user_name, ntx);
 
-    std::string additional_condition = "";
-    if (!should_retrieve_all)
-    {
-        additional_condition = " AND is_received = FALSE";
-    }
-
     std::string query =
         "WITH filtered_emails AS ( "
         "    SELECT sender_id, subject, mail_body_id, sent_at "
         "    FROM \"emailMessages\" "
         "    WHERE recipient_id = " +
-        ntx.quote(user_id) + additional_condition +
+        ntx.quote(user_id) + 
+        (should_retrieve_all ? "": " AND is_received = FALSE")+
         ")"
         "SELECT u.user_name AS sender_name, f.subject, m.body_content "
         "FROM filtered_emails AS f "
         "LEFT JOIN users AS u ON u.user_id = f.sender_id "
         "LEFT JOIN \"mailBodies\" AS m ON m.mail_body_id = f.mail_body_id "
         "ORDER BY f.sent_at DESC; ";
+
 
 
 

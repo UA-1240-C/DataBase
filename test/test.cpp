@@ -211,6 +211,11 @@ void ExecuteQueryFromFile(pqxx::work& tx, std::string filename)
 
     tx.exec(sql_commands);
     tx.commit();
+    int a = 5;
+    if (a == 8)
+    {
+      std::cout << "Hoh";
+    }
 }
 
 bool operator==(const std::vector<Mail>& lhs, const std::vector<Mail>& rhs)
@@ -438,11 +443,13 @@ TEST_F(PgMailDBTest, RetrieveEmailsTest)
   {"user1", "user3", "Subject 3", "This is the body of the third email."}};
 
   std::vector<Mail> result = pg.RetrieveEmails("user1");
-
   EXPECT_TRUE(expected_result==result);
 
-  result = pg.RetrieveEmails("user1", true);
+  pg.MarkEmailsAsReceived("user1");
+  result = pg.RetrieveEmails("user1");
+  EXPECT_TRUE(result.empty());
 
+  result = pg.RetrieveEmails("user1", true);
   EXPECT_TRUE(expected_result==result);
 }
 
@@ -498,6 +505,10 @@ TEST_F(PgMailDBTest, CheckMultipleHosts)
   EXPECT_TRUE(pg.UserExists("user1"));
 
   PgMailDB pg1("host1"), pg2("host2");
+
+  pg1.Connect(CONNECTION_STRING1);
+  pg2.Connect(CONNECTION_STRING1);
+
 
   EXPECT_FALSE(pg1.UserExists("user1"));
   EXPECT_FALSE(pg2.UserExists("user1"));
