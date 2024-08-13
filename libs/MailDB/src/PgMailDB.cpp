@@ -304,9 +304,9 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
 
     std::vector<Mail> resutl_mails;
 
-    for (auto [sender, subject, body] : ntx.query<std::string, std::string, std::string>(query))
+    for (auto& [sender, subject, body] : ntx.query<std::string, std::string, std::string>(query))
     {
-        resutl_mails.emplace_back(user_name,sender, subject, body);
+        resutl_mails.emplace_back(user_name, sender, subject, body);
     }
 
     return resutl_mails;
