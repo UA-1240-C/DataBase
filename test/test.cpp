@@ -129,7 +129,6 @@ TEST_F(DatabaseFixture, Retrieve_Existing_User_Test)
 
 TEST_F(DatabaseFixture, Retrieve_All_Users_Test)
 {
-   EXPECT_EQ(3, m_database->RetrieveUserInfo().size());
    EXPECT_EQ(3, m_database->RetrieveUserInfo("").size());
 }
 
@@ -150,7 +149,6 @@ TEST_F(DatabaseFixture, Retrieve_Unexisting_Body_Content_Test)
 
 TEST_F(DatabaseFixture, Retrieve_All_Body_Content_Test)
 {
-    EXPECT_EQ(3, m_database->RetrieveEmailContentInfo().size());
     EXPECT_EQ(3, m_database->RetrieveEmailContentInfo("").size());
 }
 

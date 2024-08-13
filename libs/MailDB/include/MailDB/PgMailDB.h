@@ -15,7 +15,7 @@ public:
     PgMailDB(std::string_view host_name);
     PgMailDB(const PgMailDB&);
 
-     ~PgMailDB() override;
+    ~PgMailDB() override;
 
     void Connect(const std::string &connection_string) override;
     void Disconnect() override;
@@ -25,8 +25,8 @@ public:
     void Login(const std::string_view user_name, const std::string_view hash_password) override;
     std::string GetPasswordHash(const std::string_view user_name) override;
 
-    std::vector<User> RetrieveUserInfo(const std::string_view user_name = "") override;
-    std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content = "") override;
+    std::vector<User> RetrieveUserInfo(const std::string_view user_name) override;
+    std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content) override;
     void InsertEmail(const std::string_view sender, const std::string_view receiver,
                                 const std::string_view subject, const std::string_view body) override;
     void InsertEmail(const std::string_view sender, const std::vector<std::string_view> receivers,
