@@ -3,8 +3,6 @@
 #include <string>
 #include <exception>
 
-#include <iostream>
-
 namespace ISXMailDB
 {
 class MailException : public std::exception
