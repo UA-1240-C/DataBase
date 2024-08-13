@@ -299,9 +299,6 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
         "LEFT JOIN \"mailBodies\" AS m ON m.mail_body_id = f.mail_body_id "
         "ORDER BY f.sent_at DESC; ";
 
-
-
-
     std::vector<Mail> resutl_mails;
 
     for (auto& [sender, subject, body] : ntx.query<std::string, std::string, std::string>(query))
