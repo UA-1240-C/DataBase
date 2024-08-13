@@ -134,18 +134,13 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
 
     uint32_t user_id = RetriveUserId(user_name, ntx);
 
-    std::string additional_condition = "";
-    if (!should_retrieve_all)
-    {
-        additional_condition = " AND is_received = FALSE";
-    }
-
     std::string query =
         "WITH filtered_emails AS ( "
         "    SELECT sender_id, subject, mail_body_id, sent_at "
         "    FROM \"emailMessages\" "
         "    WHERE recipient_id = " +
-        ntx.quote(user_id) + additional_condition +
+        ntx.quote(user_id) + 
+        (should_retrieve_all ? "": " AND is_received = FALSE")+
         ")"
         "SELECT u.user_name AS sender_name, f.subject, m.body_content "
         "FROM filtered_emails AS f "
@@ -153,13 +148,11 @@ std::vector<Mail> PgMailDB::RetrieveEmails(const std::string_view user_name, boo
         "LEFT JOIN \"mailBodies\" AS m ON m.mail_body_id = f.mail_body_id "
         "ORDER BY f.sent_at DESC; ";
 
-
-
     std::vector<Mail> resutl_mails;
 
-    for (auto [sender, subject, body] : ntx.query<std::string, std::string, std::string>(query))
+    for (auto& [sender, subject, body] : ntx.query<std::string, std::string, std::string>(query))
     {
-        resutl_mails.emplace_back(user_name,sender, subject, body);
+        resutl_mails.emplace_back(user_name, sender, subject, body);
     }
 
     return resutl_mails;

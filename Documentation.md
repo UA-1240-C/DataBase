@@ -31,11 +31,11 @@
   + Exceptions thrown:
     + MailException("Invalid user name or password") - if there is no user on host with name = user_name and password = hash_password.
 
-+ **std::vector<User> RetrieveUserInfo(const std::string_view user_name = "")** - returns list of users either user_name was specified or not. If user_name was not specified, returns list of all users.
++ **std::vector<User> RetrieveUserInfo(const std::string_view user_name)** - returns list of users either user_name was specified or not(means that was passed empty string literal - ""). If user_name was not specified, returns list of all users.
   + Exceptions thrown:
     + MailException("Connection with database lost or was manually already closed") - if connection with database was lost.
 
-+ **std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content = "")** - same as **std::vector<User> RetrieveUserInfo(const std::string_view)**, but returns body content of email.
++ **std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content)** - same as **std::vector<User> RetrieveUserInfo(const std::string_view)**, but returns body content of email.
   + Exceptions thrown:
     + MailException("Connection with database lost or was manually already closed") - if connection with database was lost.
    
