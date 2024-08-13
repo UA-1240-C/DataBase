@@ -152,7 +152,7 @@ std::vector<User> PgMailDB::RetrieveUserInfo(const std::string_view user_name)
         {
             for (auto&& row : user_query_result)
             {
-                info.push_back(User(row.at("user_name").as<std::string>()
+                info.emplace_back(User(row.at("user_name").as<std::string>()
                                   , row.at("password_hash").as<std::string>()
                                   , row.at("host_name").as<std::string>()));
             }
@@ -193,7 +193,7 @@ std::vector<std::string> PgMailDB::RetrieveEmailContentInfo(const std::string_vi
     {
         for (auto&& row : content_query_result)
         {
-            info.push_back(row.at("body_content").as<std::string>());
+            info.emplace_back(row.at("body_content").as<std::string>());
         }
 
         return info;
@@ -255,7 +255,7 @@ void PgMailDB::InsertEmail(const std::string_view sender, const std::vector<std:
                 sender_id = RetriveUserId(sender, nontransaction);
 
                 for (size_t i = 0; i < receivers.size(); i++) {
-                    receivers_id.push_back(RetriveUserId(receivers[i], nontransaction));
+                    receivers_id.emplace_back(RetriveUserId(receivers[i], nontransaction));
                 }
                 
                 body_id = InsertEmailContent(body, nontransaction);
