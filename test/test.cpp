@@ -202,7 +202,7 @@ void ExecuteQueryFromFile(pqxx::work& tx, std::string filename)
    std::ifstream file(filename);
     if (!file.is_open()) 
     {
-      FAIL() << "couldn't open a file with db tables\n"; 
+      FAIL() << "couldn't open a file " << filename << "\n"; 
     }
 
     std::stringstream buffer;
@@ -249,7 +249,7 @@ protected:
     pqxx::work tx(s_connection);
 
     ASSERT_NO_FATAL_FAILURE(
-      ExecuteQueryFromFile(tx, "../test/db_table_creation.txt")
+      ExecuteQueryFromFile(tx, "test/db_table_creation.txt")
     );
 
 
@@ -307,7 +307,7 @@ TEST_F(PgMailDBTest, GetPasswordHashTest)
   pqxx::work tx(s_connection);
   
   ASSERT_NO_FATAL_FAILURE(
-    ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
+    ExecuteQueryFromFile(tx, "test/db_insert_dummy_data.txt")
   );
   
   EXPECT_TRUE("password_hash1" == pg.GetPasswordHash("user1"));
@@ -409,7 +409,7 @@ TEST_F(PgMailDBTest, MarkEmailsAsReceived)
   pqxx::work tx(s_connection);
   
   ASSERT_NO_FATAL_FAILURE(
-    ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
+    ExecuteQueryFromFile(tx, "test/db_insert_dummy_data.txt")
   );
 
   EXPECT_THROW(pg.MarkEmailsAsReceived("non-existent user"), MailException);
@@ -434,7 +434,7 @@ TEST_F(PgMailDBTest, RetrieveEmailsTest)
   pqxx::work tx(s_connection);
   
   ASSERT_NO_FATAL_FAILURE(
-    ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
+    ExecuteQueryFromFile(tx, "test/db_insert_dummy_data.txt")
   );
 
   EXPECT_THROW(pg.RetrieveEmails("non-existent user"), MailException);
@@ -472,7 +472,7 @@ TEST_F(PgMailDBTest, CheckUserExists)
   pqxx::work tx(s_connection);
   
   ASSERT_NO_FATAL_FAILURE(
-    ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
+    ExecuteQueryFromFile(tx, "test/db_insert_dummy_data.txt")
   );
 
   EXPECT_TRUE(pg.UserExists("user1"));
