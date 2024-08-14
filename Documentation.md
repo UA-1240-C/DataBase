@@ -78,7 +78,10 @@
 ```C++
 struct User
 {
-    User(const std::string& user_name, const std::string& user_password, const std::string& host_name);
+    User(std::string user_name, std::string user_password, std::string host_name)
+        : user_name{std::move(user_name)}, user_password{std::move(user_password)}, host_name{std::move(host_name)}
+    {
+    }
 
     std::string user_name;
     std::string user_password;
@@ -87,8 +90,14 @@ struct User
 
 struct Mail
 {
-    Mail(std::string sender, std::string subject, std::string body);
-
+    Mail(const std::string_view recipient, const std::string_view sender,
+         const std::string_view subject, const std::string_view body)
+        : recipient(recipient), sender(sender), 
+          subject(subject), body(body)
+    {
+    }
+    
+    std::string recipient;
     std::string sender;
     std::string subject;
     std::string body;
