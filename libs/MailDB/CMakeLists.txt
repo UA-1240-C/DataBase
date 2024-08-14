@@ -32,12 +32,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(libpqxx)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBSODIUM REQUIRED libsodium)
+
 add_library(${LIBRARY_NAME} STATIC
     ${LIBRARY_HEADERS}  
     ${LIBRARY_SOURCE}
 )
 
-target_link_libraries(${LIBRARY_NAME} pqxx)
+target_link_libraries(${LIBRARY_NAME} PUBLIC pqxx ${LIBSODIUM_LIBRARIES})
 
 target_include_directories(${LIBRARY_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/${LIBRARY_NAME}>
