@@ -86,6 +86,16 @@ void PgMailDB::InsertHost(const std::string_view host_name)
     tx.commit();
 }
 
+std::string PgMailDB::HashPassword(const std::string_view password)
+{
+    return std::string();
+}
+
+bool PgMailDB::VerifyPassword(const std::string_view password, const std::string_view hashed_password)
+{
+    return false;
+}
+
 void PgMailDB::Login(const std::string_view user_name, const std::string_view hash_password)
 {
     pqxx::nontransaction ntx(*m_conn);
@@ -101,23 +111,6 @@ void PgMailDB::Login(const std::string_view user_name, const std::string_view ha
     {
         throw MailException("Invalid user name or password");
     }
-}
-
-std::string PgMailDB::GetPasswordHash(const std::string_view user_name)
-{
-    pqxx::nontransaction ntx(*m_conn);
-    try
-    {
-        std::string password_hash = ntx.query_value<std::string>("SELECT password_hash FROM users "
-        "WHERE user_name = " + ntx.quote(user_name) 
-        +  "AND host_id = " + ntx.quote(m_host_id));
-        return password_hash;
-    }
-    catch(const pqxx::unexpected_rows &e)
-    {
-        return {};
-    }
-    
 }
 
 std::vector<User> PgMailDB::RetrieveUserInfo(const std::string_view user_name)

@@ -296,27 +296,6 @@ protected:
 
 pqxx::connection PgMailDBTest::s_connection{CONNECTION_STRING1};
 
-TEST_F(PgMailDBTest, GetPasswordHashTest)
-{
-  std::string result = pg.GetPasswordHash("user1");
-
-  EXPECT_TRUE(result.empty());
-
-  pqxx::work tx(s_connection);
-  
-  ASSERT_NO_FATAL_FAILURE(
-    ExecuteQueryFromFile(tx, "test/db_insert_dummy_data.txt")
-  );
-  
-  EXPECT_TRUE("password_hash1" == pg.GetPasswordHash("user1"));
-  EXPECT_TRUE("password_hash2" == pg.GetPasswordHash("user2"));
-  EXPECT_TRUE("password_hash3" == pg.GetPasswordHash("user3"));
-
-
-  result = pg.GetPasswordHash("user4");
-  EXPECT_TRUE(result.empty());
-}
-
 TEST_F(PgMailDBTest, SignUpTest)
 {
   std::string user_name = "test_user1", hash_password = "hash_password1";

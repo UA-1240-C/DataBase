@@ -62,9 +62,8 @@ public:
     virtual void Disconnect() = 0;
     virtual bool IsConnected() const = 0;
 
-    virtual void SignUp(const std::string_view user_name, const std::string_view hash_password) = 0;
-    virtual void Login(const std::string_view user_name, const std::string_view hash_password) = 0;
-    virtual std::string GetPasswordHash(const std::string_view user_name) = 0;
+    virtual void SignUp(const std::string_view user_name, const std::string_view password) = 0;
+    virtual void Login(const std::string_view user_name, const std::string_view password) = 0;
 
     virtual std::vector<User> RetrieveUserInfo(const std::string_view user_name) = 0;
     virtual std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content) = 0;
@@ -78,10 +77,12 @@ public:
     virtual bool UserExists(const std::string_view user_name) = 0;
 
     virtual void DeleteEmail(const std::string_view user_name) = 0;
-    virtual void DeleteUser(const std::string_view user_name, const std::string_view hash_password) = 0;
+    virtual void DeleteUser(const std::string_view user_name, const std::string_view password) = 0;
 
 protected:
     virtual void InsertHost(const std::string_view host_name) = 0;
+    virtual std::string HashPassword(const std::string_view password) = 0;
+    virtual bool VerifyPassword(const std::string_view password, const std::string_view hashed_password) = 0;
 
     std::string m_host_name;
     uint32_t m_host_id;

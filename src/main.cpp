@@ -10,5 +10,6 @@ using namespace ISXMailDB;
 
 int main()
 {
+    User u("user_name", "password", "host_name");
     return 0;
 }

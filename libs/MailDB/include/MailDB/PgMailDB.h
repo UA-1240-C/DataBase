@@ -21,9 +21,9 @@ public:
     void Disconnect() override;
     bool IsConnected() const override;
 
-    void SignUp(const std::string_view user_name, const std::string_view hash_password) override;
-    void Login(const std::string_view user_name, const std::string_view hash_password) override;
-    std::string GetPasswordHash(const std::string_view user_name) override;
+    void SignUp(const std::string_view user_name, const std::string_view password) override;
+    void Login(const std::string_view user_name, const std::string_view password) override;
+    // std::string GetPasswordHash(const std::string_view user_name) override;
 
     std::vector<User> RetrieveUserInfo(const std::string_view user_name) override;
     std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content) override;
@@ -37,10 +37,12 @@ public:
     bool UserExists(const std::string_view user_name) override;
 
     void DeleteEmail(const std::string_view user_name) override;
-    void DeleteUser(const std::string_view user_name, const std::string_view hash_password) override;
+    void DeleteUser(const std::string_view user_name, const std::string_view password) override;
 
 protected:
     void InsertHost(const std::string_view host_name) override;
+    std::string HashPassword(const std::string_view password) override;
+    bool VerifyPassword(const std::string_view password, const std::string_view hashed_password) override;
 
     uint32_t InsertEmailContent(const std::string_view content, pqxx::transaction_base& transaction);
     uint32_t RetriveUserId(const std::string_view user_name, pqxx::transaction_base &ntx) const;
