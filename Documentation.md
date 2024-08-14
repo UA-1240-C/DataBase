@@ -21,15 +21,13 @@
 
 + **bool IsConnected()** const - return true, if connection established and exists, otherwise false. 
 
-+ **std::string GetPasswordHash(const std::string_view user_name)** - return hash password for user with specified user_name. If user doesn't exist return empty string.
-  
-+ **void SignUp(const std::string_view user_name, const std::string_view hash_password)** - creates user with name and password on host, specified in constructor.
++ **void SignUp(const std::string_view user_name, const std::string_view password)** - creates user with name and password on host, specified in constructor.
   + Exceptions thrown:
     + MailException("User already exists") - if user exists with the same name on host.
     
-+ **void Login(const std::string_view user_name, const std::string_view hash_password)** - checks if passed credentials exist in database.
++ **void Login(const std::string_view user_name, const std::string_view password)** - checks if passed credentials exist in database.
   + Exceptions thrown:
-    + MailException("Invalid user name or password") - if there is no user on host with name = user_name and password = hash_password.
+    + MailException("Invalid user name or password") - if there is no user on host with name = user_name and password = password.
 
 + **std::vector<User> RetrieveUserInfo(const std::string_view user_name)** - returns list of users either user_name was specified or not(means that was passed empty string literal - ""). If user_name was not specified, returns list of all users.
   + Exceptions thrown:
@@ -69,7 +67,7 @@
     + MailException("Given value doesn't exist in database.") - if passed user doesn't exist;
     + MailException("Connection with database lost or was manually already closed") - if connection with database was lost.
 
-+ **bool DeleteUser(const std::string_view user_name, const std::string_view hash_password)** - removes user from database and all associated mail with user either he was a sender or receiver.
++ **bool DeleteUser(const std::string_view user_name, const std::string_view password)** - removes user from database and all associated mail with user either he was a sender or receiver.
   + Exceptions thrown:
     + MailException(appropriate pqxx error message) - if transaction failed;
     + MailException("Invalid user name or password") - if bad credentials were passed;
