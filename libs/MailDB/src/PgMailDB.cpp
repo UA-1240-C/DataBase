@@ -49,22 +49,27 @@ bool PgMailDB::IsConnected() const
     return false;
 }
 
-void PgMailDB::SignUp(const std::string_view user_name, const std::string_view hash_password)
+void PgMailDB::SignUp(const std::string_view user_name, const std::string_view password)
 {
     pqxx::work tx(*m_conn);
-
     try
     {
         tx.exec_params0("SELECT 1 FROM users WHERE host_id = $1 AND user_name = $2", m_host_id, user_name);
 
+        std::string hashed_password = HashPassword(std::string(password));
+
         tx.exec_params(
             "INSERT INTO users (host_id, user_name, password_hash)"
             "VALUES ($1, $2, $3)",
-            m_host_id, user_name, hash_password);
+            m_host_id, user_name, hashed_password);
     }
-    catch (pqxx::unexpected_rows &e)
+    catch (const pqxx::unexpected_rows& e)
     {
         throw MailException("User already exists");
+    }
+    catch (const MailException& e)
+    {
+        throw;
     }
     tx.commit();
 }
@@ -86,30 +91,48 @@ void PgMailDB::InsertHost(const std::string_view host_name)
     tx.commit();
 }
 
-std::string PgMailDB::HashPassword(const std::string_view password)
+std::string PgMailDB::HashPassword(const std::string& password)
 {
-    return std::string();
+    std::string hashed_password(crypto_pwhash_STRBYTES, '\0');
+
+    if (crypto_pwhash_str(hashed_password.data(),
+        password.c_str(),
+        password.size(),
+        crypto_pwhash_OPSLIMIT_INTERACTIVE,
+        crypto_pwhash_MEMLIMIT_INTERACTIVE) != 0)
+    {
+        throw MailException("Password hashing failed");
+    }
+
+    return hashed_password;
 }
 
-bool PgMailDB::VerifyPassword(const std::string_view password, const std::string_view hashed_password)
+bool PgMailDB::VerifyPassword(const std::string& password, const std::string& hashed_password)
 {
-    return false;
+    return crypto_pwhash_str_verify(hashed_password.c_str(), password.c_str(),
+                                    password.size()) == 0;
 }
 
-void PgMailDB::Login(const std::string_view user_name, const std::string_view hash_password)
+void PgMailDB::Login(const std::string_view user_name, const std::string_view password)
 {
     pqxx::nontransaction ntx(*m_conn);
 
     try
     {
-        ntx.exec_params1(
-            "SELECT 1 FROM users "
-            "WHERE host_id = $1 AND user_name = $2 AND password_hash = $3",
-            m_host_id, user_name, hash_password);
+        std::string hashed_password = ntx.query_value<std::string>("SELECT password_hash FROM users "
+            "WHERE user_name = " + ntx.quote(user_name) 
+            +  " AND host_id = " + ntx.quote(m_host_id)
+            );
+        
+        if (!VerifyPassword(std::string(password), hashed_password))
+        {
+            throw MailException("Invalid username or password");
+        }
+
     }
     catch (const pqxx::unexpected_rows &e)
     {
-        throw MailException("Invalid user name or password");
+        throw MailException("User with mentioned username doesn't exist");
     }
 }
 
@@ -368,7 +391,7 @@ void PgMailDB::DeleteEmail(const std::string_view user_name)
     }
 }
 
-void PgMailDB::DeleteUser(const std::string_view user_name, const std::string_view hash_password)
+void PgMailDB::DeleteUser(const std::string_view user_name, const std::string_view password)
 {
     if (!IsConnected())
     {
@@ -377,7 +400,7 @@ void PgMailDB::DeleteUser(const std::string_view user_name, const std::string_vi
     
     try 
     {
-        Login(user_name, hash_password);
+        Login(user_name, password);
         DeleteEmail(user_name);
     }
     catch (const MailException& e) {
@@ -387,10 +410,16 @@ void PgMailDB::DeleteUser(const std::string_view user_name, const std::string_vi
     try
     {
         pqxx::work transaction(*m_conn);
+
+        std::string hashed_password = transaction.query_value<std::string>("SELECT password_hash FROM users "
+            "WHERE user_name = " + transaction.quote(user_name) 
+            +  " AND host_id = " + transaction.quote(m_host_id)
+            );
+
         transaction.exec_params(
             "DELETE FROM users "
             "WHERE user_name = $1 AND password_hash = $2 AND host_id = $3"
-            , transaction.esc(user_name), transaction.esc(hash_password), m_host_id
+            , transaction.esc(user_name), transaction.esc(hashed_password), m_host_id
         );
         transaction.commit();
     }

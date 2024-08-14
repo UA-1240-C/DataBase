@@ -81,8 +81,8 @@ public:
 
 protected:
     virtual void InsertHost(const std::string_view host_name) = 0;
-    virtual std::string HashPassword(const std::string_view password) = 0;
-    virtual bool VerifyPassword(const std::string_view password, const std::string_view hashed_password) = 0;
+    virtual std::string HashPassword(const std::string& password) = 0;
+    virtual bool VerifyPassword(const std::string& password, const std::string& hashed_password) = 0;
 
     std::string m_host_name;
     uint32_t m_host_id;

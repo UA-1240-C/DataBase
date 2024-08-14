@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <pqxx/pqxx>
+#include <sodium/crypto_pwhash.h>
 
 #include "IMailDB.h"
 
@@ -23,7 +24,6 @@ public:
 
     void SignUp(const std::string_view user_name, const std::string_view password) override;
     void Login(const std::string_view user_name, const std::string_view password) override;
-    // std::string GetPasswordHash(const std::string_view user_name) override;
 
     std::vector<User> RetrieveUserInfo(const std::string_view user_name) override;
     std::vector<std::string> RetrieveEmailContentInfo(const std::string_view content) override;
@@ -41,8 +41,8 @@ public:
 
 protected:
     void InsertHost(const std::string_view host_name) override;
-    std::string HashPassword(const std::string_view password) override;
-    bool VerifyPassword(const std::string_view password, const std::string_view hashed_password) override;
+    std::string HashPassword(const std::string& password) override;
+    bool VerifyPassword(const std::string& password, const std::string& hashed_password) override;
 
     uint32_t InsertEmailContent(const std::string_view content, pqxx::transaction_base& transaction);
     uint32_t RetriveUserId(const std::string_view user_name, pqxx::transaction_base &ntx) const;
