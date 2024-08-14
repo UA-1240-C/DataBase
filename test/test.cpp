@@ -233,6 +233,27 @@ bool operator==(const std::vector<Mail>& lhs, const std::vector<Mail>& rhs)
   return true;
 }
 
+std::string HashPassword(const std::string& password)
+{
+    std::string hashed_password(crypto_pwhash_STRBYTES, '\0');
+
+    if (crypto_pwhash_str(hashed_password.data(),
+        password.c_str(),
+        password.size(),
+        crypto_pwhash_OPSLIMIT_INTERACTIVE,
+        crypto_pwhash_MEMLIMIT_INTERACTIVE) != 0)
+    {
+        throw MailException("Password hashing failed");
+    }
+
+    return hashed_password;
+}
+
+bool VerifyPassword(const std::string& password, const std::string& hashed_password)
+{
+    return crypto_pwhash_str_verify(hashed_password.c_str(), password.c_str(),
+                                    password.size()) == 0;
+}
 
 class PgMailDBTest : public testing::Test
 {
@@ -247,7 +268,7 @@ protected:
     pqxx::work tx(s_connection);
 
     ASSERT_NO_FATAL_FAILURE(
-      ExecuteQueryFromFile(tx, "test/db_table_creation.txt")
+      ExecuteQueryFromFile(tx, "../test/db_table_creation.txt")
     );
 
 
@@ -305,11 +326,12 @@ TEST_F(PgMailDBTest, SignUpTest)
 
   auto [received_name, received_password] = tx.query1<std::string, std::string>(
     "SELECT user_name, password_hash FROM users "
-    "WHERE user_name = " + tx.quote(user_name) + " AND password_hash = " + tx.quote(hash_password)
+    "WHERE user_name = " + tx.quote(user_name)
     );
 
+  ;
   EXPECT_EQ(user_name, received_name);
-  EXPECT_EQ(hash_password, received_password);
+  EXPECT_TRUE(VerifyPassword(hash_password, received_password));
 
   EXPECT_THROW(pg.SignUp(user_name, hash_password), MailException);
 
@@ -326,11 +348,12 @@ TEST_F(PgMailDBTest, SignUpTest)
     pg.SignUp(name, password);
     auto [received_name, received_password] = tx.query1<std::string, std::string>(
     "SELECT user_name, password_hash FROM users "
-    "WHERE user_name = " + tx.quote(name) + " AND password_hash = " + tx.quote(password)
+    "WHERE user_name = " + tx.quote(name)
     );
 
     EXPECT_EQ(name, received_name);
-    EXPECT_EQ(password, received_password);
+    EXPECT_TRUE(VerifyPassword(password, received_password));
+
   }
 }
 
@@ -352,7 +375,7 @@ TEST_F(PgMailDBTest, LoginTest)
   {
     tx.exec_params("INSERT INTO users (host_id, user_name, password_hash) "
                    "VALUES (1, $1, $2)"
-                   , name, password);
+                   , name, HashPassword(password));
   }
   tx.commit();
   for (auto [name, password] : user_password_pairs)
@@ -386,7 +409,7 @@ TEST_F(PgMailDBTest, MarkEmailsAsReceived)
   pqxx::work tx(s_connection);
   
   ASSERT_NO_FATAL_FAILURE(
-    ExecuteQueryFromFile(tx, "test/db_insert_dummy_data.txt")
+    ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
   );
 
   EXPECT_THROW(pg.MarkEmailsAsReceived("non-existent user"), MailException);
@@ -411,7 +434,7 @@ TEST_F(PgMailDBTest, RetrieveEmailsTest)
   pqxx::work tx(s_connection);
   
   ASSERT_NO_FATAL_FAILURE(
-    ExecuteQueryFromFile(tx, "test/db_insert_dummy_data.txt")
+    ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
   );
 
   EXPECT_THROW(pg.RetrieveEmails("non-existent user"), MailException);
@@ -449,7 +472,7 @@ TEST_F(PgMailDBTest, CheckUserExists)
   pqxx::work tx(s_connection);
   
   ASSERT_NO_FATAL_FAILURE(
-    ExecuteQueryFromFile(tx, "test/db_insert_dummy_data.txt")
+    ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
   );
 
   EXPECT_TRUE(pg.UserExists("user1"));
