@@ -51,8 +51,6 @@ target_include_directories(${LIBRARY_NAME} PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
+add_subdirectory(test)
 
-if (NOT (TARGET gtest_main AND TARGET gmock_main))
-    message(FATAL_ERROR "gtest and gtest_main targets NOT found")
-endif()
 

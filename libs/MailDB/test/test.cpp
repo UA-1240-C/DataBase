@@ -12,6 +12,10 @@
 const char*  CONNECTION_STRING1 = "dbname=testmaildb user=postgres password=password hostaddr=127.0.0.1 port=5432";
 const char*  CONNECTION_STRING2 = "dbname=testmaildb2 user=postgres password=password hostaddr=127.0.0.1 port=5432";
 
+const char*  DB_INSERT_DUMMY_DATA_FILE = "../../../../libs/MailDB/test/db_insert_dummy_data.txt";
+const char*  DB_TABLE_CREATION_FILE = "../../../../libs/MailDB/test/db_table_creation.txt";
+
+
 using namespace ISXMailDB;
 
 class DatabaseFixture : public testing::Test
@@ -268,7 +272,7 @@ protected:
     pqxx::work tx(s_connection);
 
     ASSERT_NO_FATAL_FAILURE(
-      ExecuteQueryFromFile(tx, "../test/db_table_creation.txt")
+      ExecuteQueryFromFile(tx, DB_TABLE_CREATION_FILE)
     );
 
 
@@ -409,7 +413,7 @@ TEST_F(PgMailDBTest, MarkEmailsAsReceived)
   pqxx::work tx(s_connection);
   
   ASSERT_NO_FATAL_FAILURE(
-    ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
+    ExecuteQueryFromFile(tx, DB_INSERT_DUMMY_DATA_FILE)
   );
 
   EXPECT_THROW(pg.MarkEmailsAsReceived("non-existent user"), MailException);
@@ -434,7 +438,7 @@ TEST_F(PgMailDBTest, RetrieveEmailsTest)
   pqxx::work tx(s_connection);
   
   ASSERT_NO_FATAL_FAILURE(
-    ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
+    ExecuteQueryFromFile(tx, DB_INSERT_DUMMY_DATA_FILE)
   );
 
   EXPECT_THROW(pg.RetrieveEmails("non-existent user"), MailException);
@@ -472,7 +476,7 @@ TEST_F(PgMailDBTest, CheckUserExists)
   pqxx::work tx(s_connection);
   
   ASSERT_NO_FATAL_FAILURE(
-    ExecuteQueryFromFile(tx, "../test/db_insert_dummy_data.txt")
+    ExecuteQueryFromFile(tx, DB_INSERT_DUMMY_DATA_FILE)
   );
 
   EXPECT_TRUE(pg.UserExists("user1"));

@@ -52,6 +52,6 @@ endforeach(LIBRARY)
 
 target_link_libraries(${MAILDATABASE_PROJECT_NAME} ${MAILDATABASE_LIBRARIES})
 
-add_executable(MailDBTests test/test.cpp)
-target_link_libraries(MailDBTests ${MAILDATABASE_LIBRARIES} gtest_main gmock_main)
+# add_executable(MailDBTests test/test.cpp)
+# target_link_libraries(MailDBTests ${MAILDATABASE_LIBRARIES} gtest_main gmock_main)
 
