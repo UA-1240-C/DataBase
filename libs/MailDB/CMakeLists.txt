@@ -25,15 +25,14 @@ set(LIBRARY_SOURCE
 
 project(${PROJECT_NAME})
 
-FetchContent_Declare(
-  libpqxx
-  GIT_REPOSITORY https://github.com/jtv/libpqxx.git
-  GIT_TAG 7.7.4 
-)
-FetchContent_MakeAvailable(libpqxx)
-
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBSODIUM REQUIRED libsodium)
+
+# Check if libpqxx is available
+if (NOT TARGET pqxx)
+    message(FATAL_ERROR "libpqxx is not available")
+endif()
+
 
 add_library(${LIBRARY_NAME} STATIC
     ${LIBRARY_HEADERS}  
