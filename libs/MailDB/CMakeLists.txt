@@ -53,3 +53,7 @@ target_include_directories(${LIBRARY_NAME} PUBLIC
 )
 
 
+if (NOT (TARGET gtest_main AND TARGET gmock_main))
+    message(FATAL_ERROR "gtest and gtest_main targets NOT found")
+endif()
+
